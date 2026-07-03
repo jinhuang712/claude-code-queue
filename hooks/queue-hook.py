@@ -232,18 +232,23 @@ def mode_enqueue():
         sys.stderr.write("🧹 已清空本会话队列\n")
         sys.exit(2)
 
-    # action == "add" → waiting area
-    q_add(arg, session_id)
-    pending = len(_pending(session_id))
+    # action == "add"
     if _is_busy(session_id):
+        # busy → waiting area (zero interruption); Stop pops it when the turn ends
+        q_add(arg, session_id)
+        pending = len(_pending(session_id))
         _log(session_id, f"enqueue(queue) -> BLOCKED (busy) arg={arg[:40]!r}")
         sys.stderr.write(
             f"📝 已入队·等候区（前一条跑完后自动开始，当前 {pending} 条）："
             f"{_preview(arg, 40)}\n"
         )
         sys.exit(2)  # block: do NOT interrupt the running turn
-    # idle → let the /queue slash command ack; its Stop pops the item right away
-    _log(session_id, f"enqueue(queue) -> ALLOW (idle) arg={arg[:40]!r}")
+    # idle → nothing to wait behind. Don't enqueue (that would cost an extra
+    # ack round-trip + an ugly Stop-hook pop). Let the /queue slash command
+    # handle the request now, as a normal single turn. Mark busy so a /queue
+    # arriving during this turn also waits.
+    _set_busy(session_id)
+    _log(session_id, f"enqueue(queue) -> ALLOW (idle, handle now) arg={arg[:40]!r}")
     sys.exit(0)
 
 
@@ -267,7 +272,7 @@ def mode_deliver():
     sys.stderr.write(
         f"🔔 queued message popped（{tail}）：{_preview(msg, 50)}\n"
     )
-    reason = f"（这是之前排队等候的请求，现在自动开始处理。）\n\n{msg}"
+    reason = msg
     sys.stdout.write(
         json.dumps({"decision": "block", "reason": reason}, ensure_ascii=False)
     )

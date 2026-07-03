@@ -18,15 +18,16 @@ interrupt — just queue this for when you finish."* This skill adds that.
   current turn is **not interrupted** — no mid-tool-call injection. When the
   turn finishes, the oldest item is popped (`🔔 queued message popped`) and
   auto-starts.
-- **Idle**: the message is queued and starts immediately (nothing to wait for).
+- **Idle**: handled immediately as a normal request (nothing to wait behind — no
+  extra ack/pop round-trip).
 - Multiple items drain **FIFO**, one per turn, until the queue is empty.
 
 ## How it works
 
 | Piece | Hook event | Job |
 |---|---|---|
-| `hooks/queue-hook.py enqueue` | `UserPromptSubmit` | A non-`/queue` prompt **sets a busy marker** (a turn started). A `/queue` prompt stores the message scoped to this session; if the marker is fresh it's **blocked** (waiting area, zero interruption), otherwise let through. |
-| `commands/queue.md` | — | One-line ack (idle path only — the item then pops immediately). |
+| `hooks/queue-hook.py enqueue` | `UserPromptSubmit` | A non-`/queue` prompt **sets a busy marker** (a turn started). A `/queue` prompt: if busy → store + **block** (waiting area, zero interruption); if idle → let the slash command handle it now as a normal turn (no enqueue, no extra round-trip). |
+| `commands/queue.md` | — | Idle path only — handle the request now, like a normal prompt. |
 | `hooks/queue-hook.py deliver` | `Stop` | Pop the oldest item for **this session**, print `🔔 queued message popped`, and feed it back so Claude auto-starts it. Re-sets the busy marker (the queued item is now its own turn). If the queue is empty, clear the marker (idle). |
 
 The queue is **per-session** (`~/.claude/queue/<session_id>/`), so an item is
@@ -61,7 +62,7 @@ Requirements: Claude Code, Python 3 (standard on macOS/Linux).
 | You type | What happens |
 |---|---|
 | `/queue 请帮我…` (while Claude is busy) | Stored silently; runs after the current turn. |
-| `/queue 请帮我…` (while Claude is idle) | Acked, then runs immediately. |
+| `/queue 请帮我…` (while Claude is idle) | Handled immediately, like a normal prompt. |
 | `/queue` | Show the current queue. |
 | `/queue clear` | Empty the queue. |
 

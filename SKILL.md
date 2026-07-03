@@ -28,8 +28,8 @@ Three pieces cooperate:
 
 | Piece | Event | Role |
 |---|---|---|
-| `hooks/queue-hook.py enqueue` | `UserPromptSubmit` | A non-`/queue` prompt **sets a busy marker** (a turn started). A `/queue` prompt stores the message scoped to this session; if the marker is fresh it's **blocked** (waiting area, zero interruption), otherwise let through so it pops immediately. |
-| `commands/queue.md` (`/queue`) | — | One-line ack (idle path only). |
+| `hooks/queue-hook.py enqueue` | `UserPromptSubmit` | A non-`/queue` prompt **sets a busy marker** (a turn started). A `/queue` prompt: if busy → store + **block** (waiting area, zero interruption); if idle → let the slash command handle it now as a normal turn. |
+| `commands/queue.md` (`/queue`) | — | Idle path only — handle the request now, like a normal prompt. |
 | `hooks/queue-hook.py deliver` | `Stop` | When a turn ends, pops the oldest queued item **for this session**, prints `🔔 queued message popped`, and feeds it back so Claude auto-starts it. Re-sets the busy marker; clears it when the queue empties. |
 
 The queue is **per-session** (`~/.claude/queue/<session_id>/`), so an item is
