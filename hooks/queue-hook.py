@@ -1,20 +1,18 @@
 #!/usr/bin/env python3
-"""claude-code-queue — FIFO prompt queue for Claude Code.
+"""claude-code-queue — per-session FIFO prompt queue for Claude Code.
 
-Gives you Codex-style "queue" semantics: a message typed while Claude is busy
-is NOT injected at the next tool-call boundary. Instead it is stored and
-delivered only after the current turn finishes.
+Gives Codex-style "queue" semantics: a message typed while Claude is busy is
+NOT injected at the next tool-call boundary. It is stored and delivered only
+after the current turn finishes — in the SAME session that queued it.
 
 Wiring (see README / install.sh):
-  UserPromptSubmit hook  -> `queue-hook.py enqueue`   (intercept /queue when busy)
-  Stop hook              -> `queue-hook.py deliver`   (drain queue at turn end)
-  /queue slash command   -> `queue-hook.py add`       (idle fallback / ack)
+  UserPromptSubmit hook -> `queue-hook.py enqueue`  (intercept /queue, store)
+  Stop hook             -> `queue-hook.py deliver`  (drain THIS session's queue)
+  /queue slash command  -> just acks (the hook already stored the message)
 
-Manual ops:
-  python3 queue-hook.py add "some task"
-  python3 queue-hook.py list
-  python3 queue-hook.py count
-  python3 queue-hook.py clear
+Store layout: ~/.claude/queue/<session_id>/*.msg  (one file per item, FIFO)
+
+Set CLAUDE_QUEUE_DEBUG=1 to log hook payloads to ~/.claude/queue/.debug.log
 """
 
 import glob
@@ -29,33 +27,56 @@ QUEUE_DIR = os.path.expanduser(
 )
 SESSIONS_DIR = os.path.expanduser("~/.claude/sessions")
 PREFIX = "/queue"
+GLOBAL = "_global"
+DEBUG = os.environ.get("CLAUDE_QUEUE_DEBUG", "") == "1"
 
 
 # --------------------------------------------------------------------------- #
-# queue store (one .msg file per entry, FIFO by filename sort)
+# debug
 # --------------------------------------------------------------------------- #
-def _ensure_dir():
-    os.makedirs(QUEUE_DIR, exist_ok=True)
+def _log(msg):
+    if not DEBUG:
+        return
+    try:
+        os.makedirs(QUEUE_DIR, exist_ok=True)
+        with open(os.path.join(QUEUE_DIR, ".debug.log"), "a") as fh:
+            fh.write(f"[{time.strftime('%H:%M:%S')}] {msg}\n")
+    except OSError:
+        pass
 
 
-def _pending():
-    _ensure_dir()
-    return sorted(glob.glob(os.path.join(QUEUE_DIR, "*.msg")))
+# --------------------------------------------------------------------------- #
+# store — per-session subdirectory, one .msg file per entry, FIFO by name
+# --------------------------------------------------------------------------- #
+def _safe(name):
+    return "".join(c for c in (name or "") if c.isalnum() or c in "-_") or GLOBAL
 
 
-def q_add(message):
+def _session_dir(session_id):
+    return os.path.join(QUEUE_DIR, _safe(session_id))
+
+
+def _pending(session_id):
+    return sorted(glob.glob(os.path.join(_session_dir(session_id), "*.msg")))
+
+
+def _pending_all():
+    return sorted(glob.glob(os.path.join(QUEUE_DIR, "*", "*.msg")))
+
+
+def q_add(message, session_id):
     message = message.strip()
     if not message:
         return
-    _ensure_dir()
-    # nanosecond timestamp keeps FIFO order; rand avoids same-ns collisions.
+    d = _session_dir(session_id)
+    os.makedirs(d, exist_ok=True)
     name = f"{time.time_ns()}-{random.randint(0, 999999):06d}.msg"
-    with open(os.path.join(QUEUE_DIR, name), "w", encoding="utf-8") as fh:
+    with open(os.path.join(d, name), "w", encoding="utf-8") as fh:
         fh.write(message)
 
 
-def q_pop():
-    files = _pending()
+def q_pop(session_id):
+    files = _pending(session_id)
     if not files:
         return None
     path = files[0]
@@ -70,8 +91,9 @@ def q_pop():
     return msg
 
 
-def q_clear():
-    for path in _pending():
+def q_clear(session_id):
+    targets = _pending(session_id) if session_id else _pending_all()
+    for path in targets:
         try:
             os.remove(path)
         except OSError:
@@ -101,8 +123,7 @@ def _session_status(session_id):
 
 
 def _is_busy(session_id):
-    # Anything that is not explicitly "idle" is treated as busy. Over-blocking
-    # is safe: the item just waits for the Stop hook to drain it.
+    # Anything not explicitly "idle" is treated as busy (safe over-block).
     return _session_status(session_id) != "idle"
 
 
@@ -110,10 +131,7 @@ def _is_busy(session_id):
 # /queue prompt parsing
 # --------------------------------------------------------------------------- #
 def _parse(prompt):
-    """Return (action, arg) for a /queue prompt, or None if it isn't one.
-
-    action ∈ {"add", "list", "clear"}
-    """
+    """Return (action, arg) for a /queue prompt, or None if it isn't one."""
     text = prompt.strip()
     if text == PREFIX or text.startswith(PREFIX + " "):
         rest = text[len(PREFIX):].strip()
@@ -125,18 +143,24 @@ def _parse(prompt):
     return None
 
 
+def _read_stdin_json():
+    try:
+        raw = sys.stdin.read()
+        return json.loads(raw) if raw.strip() else {}
+    except ValueError:
+        return {}
+
+
 # --------------------------------------------------------------------------- #
 # hook modes
 # --------------------------------------------------------------------------- #
 def mode_enqueue():
-    """UserPromptSubmit: intercept /queue. Block when busy, allow when idle."""
-    try:
-        raw = sys.stdin.read()
-        data = json.loads(raw) if raw.strip() else {}
-    except ValueError:
-        sys.exit(0)  # can't parse → never break the user's prompt
+    """UserPromptSubmit: store /queue message in THIS session; block if busy."""
+    data = _read_stdin_json()
     prompt = data.get("prompt", "")
     session_id = data.get("session_id", "")
+    _log(f"enqueue session={session_id} status={_session_status(session_id)} "
+         f"prompt={prompt[:60]!r}")
 
     parsed = _parse(prompt)
     if parsed is None:
@@ -145,39 +169,39 @@ def mode_enqueue():
     action, arg = parsed
 
     if action == "list":
-        _emit_queue()
+        _emit_queue(session_id)
         sys.exit(2)
     if action == "clear":
-        q_clear()
-        sys.stderr.write("🧹 队列已清空\n")
+        q_clear(session_id)
+        sys.stderr.write("🧹 已清空本会话队列\n")
         sys.exit(2)
 
-    # action == "add"
+    # action == "add" — store to THIS session, always (busy or idle)
+    q_add(arg, session_id)
+    pending = len(_pending(session_id))
+
     if _is_busy(session_id):
-        # Busy: enqueue here and block, so the message is NOT injected mid-turn.
-        # The Stop hook drains the queue when the current turn finishes.
-        q_add(arg)
-        pending = len(_pending())
         sys.stderr.write(
-            f"📝 已入队（忙时排队，当前 {pending} 条）：{_preview(arg, 40)}\n"
-            f"   → 当前任务跑完后自动开始，不会打断。\n"
+            f"📝 已入队（本任务跑完后自动开始，当前 {pending} 条）："
+            f"{_preview(arg, 40)}\n"
         )
         sys.exit(2)  # block: do NOT inject mid-turn
-    # Idle: don't enqueue here — let the /queue slash command do it (single
-    # enqueue). The Stop hook then drains it immediately.
+    # idle: let the /queue slash command ack; its Stop then drains the item.
     sys.exit(0)
 
 
 def mode_deliver():
-    """Stop hook: if the queue is non-empty, refuse to stop and feed next item."""
-    msg = q_pop()
+    """Stop hook: drain THIS session's queue only (no cross-session theft)."""
+    data = _read_stdin_json()
+    session_id = data.get("session_id", "")
+    _log(f"deliver session={session_id} pending={len(_pending(session_id))}")
+
+    msg = q_pop(session_id)
     if not msg:
-        sys.exit(0)  # empty → allow stop
-    remaining = len(_pending())
-    tail = f"（队列还剩 {remaining} 条）" if remaining else "（队列已空）"
-    reason = (
-        f"📋 队列里有之前排队的请求 {tail}，请现在处理它：\n\n{msg}"
-    )
+        sys.exit(0)  # nothing for this session → allow stop
+    remaining = len(_pending(session_id))
+    tail = f"还剩 {remaining} 条" if remaining else "队列已空"
+    reason = f"📋 [队列任务 · {tail}] 请处理这个之前排队的请求：\n\n{msg}"
     sys.stdout.write(
         json.dumps({"decision": "block", "reason": reason}, ensure_ascii=False)
     )
@@ -188,45 +212,51 @@ def mode_deliver():
 # CLI / slash-command modes
 # --------------------------------------------------------------------------- #
 def mode_add():
+    """Manual add. Without a session id it lands in _global (won't auto-drain)."""
     if len(sys.argv) >= 3:
         message = " ".join(sys.argv[2:])
     else:
         message = sys.stdin.read()
-    q_add(message)
-    pending = len(_pending())
-    sys.stdout.write(f"📝 已入队（当前 {pending} 条）：{_preview(message, 40)}\n")
+    sid = os.environ.get("CLAUDE_SESSION_ID", "")
+    q_add(message, sid)
+    where = "本会话" if sid else "全局(_global，不会自动投递)"
+    pending = len(_pending(sid))
+    sys.stdout.write(
+        f"📝 已入队 → {where}（当前 {pending} 条）：{_preview(message, 40)}\n"
+    )
 
 
 def mode_list():
-    files = _pending()
+    files = _pending_all()
     if not files:
         print("（队列为空）")
         return
-    print(f"队列（{len(files)} 条，按入队顺序）：")
+    print(f"队列（{len(files)} 条，跨所有会话）：")
     for idx, path in enumerate(files, 1):
+        sess = os.path.basename(os.path.dirname(path))[:8]
         try:
             with open(path, "r", encoding="utf-8") as fh:
                 content = fh.read()
         except OSError:
             content = "<?>"
-        print(f"  {idx}. {_preview(content)}")
+        print(f"  {idx}. [{sess}] {_preview(content)}")
 
 
 def mode_clear():
-    q_clear()
-    print("🧹 队列已清空")
+    q_clear("")
+    print("🧹 已清空所有会话的队列")
 
 
 def mode_count():
-    print(len(_pending()))
+    print(len(_pending_all()))
 
 
-def _emit_queue():
-    files = _pending()
+def _emit_queue(session_id):
+    files = _pending(session_id)
     if not files:
-        sys.stderr.write("（队列为空）\n")
+        sys.stderr.write("（本会话队列为空）\n")
         return
-    sys.stderr.write(f"队列（{len(files)} 条，按入队顺序）：\n")
+    sys.stderr.write(f"本会话队列（{len(files)} 条）：\n")
     for idx, path in enumerate(files, 1):
         try:
             with open(path, "r", encoding="utf-8") as fh:

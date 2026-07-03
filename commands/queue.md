@@ -1,23 +1,17 @@
 ---
-description: Queue a prompt to run after the current turn (Codex-style queue, no mid-turn interruption)
+description: Queue a prompt to run after the current turn, in this session only (Codex-style queue, no mid-turn interruption)
 ---
 
-You are receiving a `/queue` command. The user wants this request **deferred**, not executed right now.
+The `/queue` message has **already been stored** by the UserPromptSubmit hook (scoped to this session). You do not need to run any command — just acknowledge in one line and stop:
 
-Run this single command to enqueue it (the request is passed via stdin so any quotes / newlines / unicode are safe):
+```
+📝 已入队（本任务跑完后自动开始）
+```
+
+Do not work on the queued request now. If you were mid-task, immediately resume that task after the one-line ack. The queued item will be delivered automatically when the current turn ends.
+
+If for some reason nothing was queued (e.g. `$ARGUMENTS` is empty), run this to show the queue instead:
 
 ```bash
-python3 "$HOME/.claude/hooks/queue-hook.py" add <<'__QUEUE_MSG__'
-$ARGUMENTS
-__QUEUE_MSG__
+python3 "$HOME/.claude/hooks/queue-hook.py" list
 ```
-
-Then reply with **exactly one line** and stop — do not engage with the request content, do not start working on it:
-
-```
-📝 已入队（当前任务跑完后自动开始）
-```
-
-Notes:
-- If you were mid-task when this arrived, immediately resume that task after the one-line ack.
-- If `$ARGUMENTS` is empty, instead of enqueuing run `python3 "$HOME/.claude/hooks/queue-hook.py" list` and show the current queue.
