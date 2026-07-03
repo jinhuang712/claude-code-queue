@@ -28,13 +28,15 @@ Three pieces cooperate:
 
 | Piece | Event | Role |
 |---|---|---|
-| `hooks/queue-hook.py enqueue` | `UserPromptSubmit` | Intercepts `/queue`. If Claude is **busy** → store + block (zero mid-turn injection). If **idle** → let the slash command handle it. |
-| `commands/queue.md` (`/queue`) | — | Idle-path fallback: enqueues with a one-line ack. |
-| `hooks/queue-hook.py deliver` | `Stop` | When a turn ends, pops the oldest queued item and feeds it back to Claude so it keeps working. Drains the whole queue in FIFO order. |
+| `hooks/queue-hook.py enqueue` | `UserPromptSubmit` | A non-`/queue` prompt **sets a busy marker** (a turn started). A `/queue` prompt stores the message scoped to this session; if the marker is fresh it's **blocked** (waiting area, zero interruption), otherwise let through so it pops immediately. |
+| `commands/queue.md` (`/queue`) | — | One-line ack (idle path only). |
+| `hooks/queue-hook.py deliver` | `Stop` | When a turn ends, pops the oldest queued item **for this session**, prints `🔔 queued message popped`, and feeds it back so Claude auto-starts it. Re-sets the busy marker; clears it when the queue empties. |
 
-Busy/idle is detected from Claude Code's own per-session `status` field
-(`~/.claude/sessions/*.json`). Anything that isn't explicitly `idle` is treated
-as busy, so the safe default is "don't interrupt."
+The queue is **per-session** (`~/.claude/queue/<session_id>/`), so an item is
+only picked up by the session that queued it. Busy/idle is decided by a
+**self-maintained marker** (not Claude Code's `status` field, which can be stale
+and dead-end messages): set when a real turn starts, cleared when the queue
+drains; older than 1 hour is treated as stale.
 
 ## When Claude should suggest `/queue`
 

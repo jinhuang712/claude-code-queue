@@ -14,22 +14,29 @@ interrupt — just queue this for when you finish."* This skill adds that.
 /queue 请帮我重构 auth 模块，并补上测试
 ```
 
-- **Busy** (Claude is working): the message is stored; the current turn is
-  **not** interrupted. When the turn ends, Claude picks it up automatically.
-- **Idle**: the message is queued and starts immediately on the next turn.
+- **Busy** (Claude is working): the message goes to a **waiting area** and the
+  current turn is **not interrupted** — no mid-tool-call injection. When the
+  turn finishes, the oldest item is popped (`🔔 queued message popped`) and
+  auto-starts.
+- **Idle**: the message is queued and starts immediately (nothing to wait for).
 - Multiple items drain **FIFO**, one per turn, until the queue is empty.
 
 ## How it works
 
 | Piece | Hook event | Job |
 |---|---|---|
-| `hooks/queue-hook.py enqueue` | `UserPromptSubmit` | Intercept `/queue`. **Busy → store + block** (no mid-turn injection). **Idle → pass through** to the slash command. |
-| `commands/queue.md` | — | Idle-path enqueue + one-line ack. |
-| `hooks/queue-hook.py deliver` | `Stop` | Pop the oldest item and feed it back so Claude keeps going. Drains FIFO. |
+| `hooks/queue-hook.py enqueue` | `UserPromptSubmit` | A non-`/queue` prompt **sets a busy marker** (a turn started). A `/queue` prompt stores the message scoped to this session; if the marker is fresh it's **blocked** (waiting area, zero interruption), otherwise let through. |
+| `commands/queue.md` | — | One-line ack (idle path only — the item then pops immediately). |
+| `hooks/queue-hook.py deliver` | `Stop` | Pop the oldest item for **this session**, print `🔔 queued message popped`, and feed it back so Claude auto-starts it. Re-sets the busy marker (the queued item is now its own turn). If the queue is empty, clear the marker (idle). |
 
-Busy/idle is read from Claude Code's own per-session `status` field
-(`~/.claude/sessions/*.json`). Anything not explicitly `idle` is treated as
-busy — so the safe default is "don't interrupt."
+The queue is **per-session** (`~/.claude/queue/<session_id>/`), so an item is
+only ever picked up by the session that queued it — no cross-session theft.
+
+Busy detection uses a **self-maintained marker** rather than Claude Code's
+`status` field, which can be stale and dead-end messages (block while actually
+idle → no turn → never drained). The marker is set when a real turn starts and
+cleared when the queue drains; a marker older than 1 hour is treated as stale
+(crashed/abandoned turn).
 
 This is the **B-class** queue (single-session, don't-interrupt), distinct from
 rate-limit batching tools like `JCSnap/claude-code-queue` (which survive 5-hour
@@ -79,10 +86,10 @@ at `~/.claude/queue/` is left untouched.
 
 ## Notes / limitations
 
-- Busy detection relies on Claude Code writing `"status"` to session files. If
-  the status can't be determined, the hook defaults to **busy** (blocks) to
-  protect the "don't interrupt" guarantee. If a queued item ever seems stuck,
-  send any prompt — the `Stop` hook drains the queue at turn end.
+- Busy/idle is decided by a self-maintained marker (see *How it works*), not
+  Claude Code's `status` field. If a queued item ever seems stuck (e.g. after a
+  crash), `/queue clear` or sending any prompt resets things — the `Stop` hook
+  drains the queue at turn end.
 - Hooks are user-scoped (`~/.claude/settings.json`), so this works across all
   your projects.
 - `/queue` is owned by this skill; don't expect another `/queue` command to

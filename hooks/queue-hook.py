@@ -1,18 +1,23 @@
 #!/usr/bin/env python3
 """claude-code-queue — per-session FIFO prompt queue for Claude Code.
 
-Gives Codex-style "queue" semantics: a message typed while Claude is busy is
-NOT injected at the next tool-call boundary. It is stored and delivered only
-after the current turn finishes — in the SAME session that queued it.
+Gives Codex-style "queue" semantics: a `/queue` message typed while Claude is
+busy goes to a waiting area and does NOT interrupt the current turn. When the
+turn finishes, the oldest queued item is popped ("queued message popped") and
+auto-starts — in the SAME session.
+
+Busy detection uses a self-maintained marker (not Claude Code's `status` field,
+which can be stale): a non-`/queue` UserPromptSubmit sets it (a turn started),
+and a Stop with an empty queue clears it. A `/queue` while the marker is fresh
+is blocked; otherwise it's allowed through so it pops immediately.
 
 Wiring (see README / install.sh):
-  UserPromptSubmit hook -> `queue-hook.py enqueue`  (intercept /queue, store)
-  Stop hook             -> `queue-hook.py deliver`  (drain THIS session's queue)
-  /queue slash command  -> just acks (the hook already stored the message)
+  UserPromptSubmit hook -> `queue-hook.py enqueue`
+  Stop hook             -> `queue-hook.py deliver`
 
-Store layout: ~/.claude/queue/<session_id>/*.msg  (one file per item, FIFO)
+Store layout: ~/.claude/queue/<session_id>/*.msg  + a `.busy` marker file.
 
-Set CLAUDE_QUEUE_DEBUG=1 to log hook payloads to ~/.claude/queue/.debug.log
+Set CLAUDE_QUEUE_DEBUG=1 to log hook payloads to ~/.claude/queue/<sid>/.debug
 """
 
 import glob
@@ -25,28 +30,30 @@ import time
 QUEUE_DIR = os.path.expanduser(
     os.environ.get("CLAUDE_QUEUE_DIR", "~/.claude/queue")
 )
-SESSIONS_DIR = os.path.expanduser("~/.claude/sessions")
 PREFIX = "/queue"
 GLOBAL = "_global"
 DEBUG = os.environ.get("CLAUDE_QUEUE_DEBUG", "") == "1"
+# A busy marker older than this is treated as stale (crashed/abandoned turn).
+BUSY_STALE_SECONDS = 3600
 
 
 # --------------------------------------------------------------------------- #
 # debug
 # --------------------------------------------------------------------------- #
-def _log(msg):
+def _log(session_id, msg):
     if not DEBUG:
         return
     try:
-        os.makedirs(QUEUE_DIR, exist_ok=True)
-        with open(os.path.join(QUEUE_DIR, ".debug.log"), "a") as fh:
+        d = _session_dir(session_id)
+        os.makedirs(d, exist_ok=True)
+        with open(os.path.join(d, ".debug"), "a") as fh:
             fh.write(f"[{time.strftime('%H:%M:%S')}] {msg}\n")
     except OSError:
         pass
 
 
 # --------------------------------------------------------------------------- #
-# store — per-session subdirectory, one .msg file per entry, FIFO by name
+# store — per-session subdirectory
 # --------------------------------------------------------------------------- #
 def _safe(name):
     return "".join(c for c in (name or "") if c.isalnum() or c in "-_") or GLOBAL
@@ -62,6 +69,10 @@ def _pending(session_id):
 
 def _pending_all():
     return sorted(glob.glob(os.path.join(QUEUE_DIR, "*", "*.msg")))
+
+
+def _busy_path(session_id):
+    return os.path.join(_session_dir(session_id), ".busy")
 
 
 def q_add(message, session_id):
@@ -106,25 +117,38 @@ def _preview(text, width=60):
 
 
 # --------------------------------------------------------------------------- #
-# busy detection via the session status field written by Claude Code
+# busy marker — self-maintained, more reliable than the status field
 # --------------------------------------------------------------------------- #
-def _session_status(session_id):
-    if not session_id or not os.path.isdir(SESSIONS_DIR):
-        return "unknown"
-    for path in glob.glob(os.path.join(SESSIONS_DIR, "*.json")):
-        try:
-            with open(path, "r", encoding="utf-8") as fh:
-                data = json.load(fh)
-        except (OSError, ValueError):
-            continue
-        if data.get("sessionId") == session_id:
-            return data.get("status", "unknown")
-    return "unknown"
+def _set_busy(session_id):
+    os.makedirs(_session_dir(session_id), exist_ok=True)
+    # touch: create if absent, update mtime either way
+    path = _busy_path(session_id)
+    with open(path, "a"):
+        pass
+    os.utime(path, None)
+
+
+def _clear_busy(session_id):
+    try:
+        os.remove(_busy_path(session_id))
+    except OSError:
+        pass
 
 
 def _is_busy(session_id):
-    # Anything not explicitly "idle" is treated as busy (safe over-block).
-    return _session_status(session_id) != "idle"
+    """True iff a turn appears to be active right now (marker fresh)."""
+    path = _busy_path(session_id)
+    try:
+        age = time.time() - os.path.getmtime(path)
+    except OSError:
+        return False
+    if age > BUSY_STALE_SECONDS:
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+        return False
+    return True
 
 
 # --------------------------------------------------------------------------- #
@@ -155,16 +179,17 @@ def _read_stdin_json():
 # hook modes
 # --------------------------------------------------------------------------- #
 def mode_enqueue():
-    """UserPromptSubmit: store /queue message in THIS session; block if busy."""
+    """UserPromptSubmit: mark turns busy, route /queue to the waiting area."""
     data = _read_stdin_json()
     prompt = data.get("prompt", "")
     session_id = data.get("session_id", "")
-    _log(f"enqueue session={session_id} status={_session_status(session_id)} "
-         f"prompt={prompt[:60]!r}")
 
     parsed = _parse(prompt)
     if parsed is None:
-        sys.exit(0)  # not a /queue prompt → pass through untouched
+        # A real (non-/queue) turn is starting → mark this session busy.
+        _set_busy(session_id)
+        _log(session_id, f"enqueue(non-queue) busy=set prompt={prompt[:50]!r}")
+        sys.exit(0)
 
     action, arg = parsed
 
@@ -176,32 +201,42 @@ def mode_enqueue():
         sys.stderr.write("🧹 已清空本会话队列\n")
         sys.exit(2)
 
-    # action == "add" — store to THIS session, always (busy or idle)
+    # action == "add" → waiting area
     q_add(arg, session_id)
     pending = len(_pending(session_id))
-
     if _is_busy(session_id):
+        _log(session_id, f"enqueue(queue) -> BLOCKED (busy) arg={arg[:40]!r}")
         sys.stderr.write(
-            f"📝 已入队（本任务跑完后自动开始，当前 {pending} 条）："
+            f"📝 已入队·等候区（前一条跑完后自动开始，当前 {pending} 条）："
             f"{_preview(arg, 40)}\n"
         )
-        sys.exit(2)  # block: do NOT inject mid-turn
-    # idle: let the /queue slash command ack; its Stop then drains the item.
+        sys.exit(2)  # block: do NOT interrupt the running turn
+    # idle → let the /queue slash command ack; its Stop pops the item right away
+    _log(session_id, f"enqueue(queue) -> ALLOW (idle) arg={arg[:40]!r}")
     sys.exit(0)
 
 
 def mode_deliver():
-    """Stop hook: drain THIS session's queue only (no cross-session theft)."""
+    """Stop hook: pop the next queued item for this session, or go idle."""
     data = _read_stdin_json()
     session_id = data.get("session_id", "")
-    _log(f"deliver session={session_id} pending={len(_pending(session_id))}")
 
     msg = q_pop(session_id)
     if not msg:
-        sys.exit(0)  # nothing for this session → allow stop
+        _clear_busy(session_id)  # nothing queued → this session is now idle
+        _log(session_id, "deliver -> idle (queue empty), busy=cleared")
+        sys.exit(0)
+
+    # A queued item is starting its own turn → mark busy again so a further
+    # /queue during it also waits.
+    _set_busy(session_id)
     remaining = len(_pending(session_id))
     tail = f"还剩 {remaining} 条" if remaining else "队列已空"
-    reason = f"📋 [队列任务 · {tail}] 请处理这个之前排队的请求：\n\n{msg}"
+    _log(session_id, f"deliver -> POP busy=set remaining={remaining}")
+    sys.stderr.write(
+        f"🔔 queued message popped（{tail}）：{_preview(msg, 50)}\n"
+    )
+    reason = f"（这是之前排队等候的请求，现在自动开始处理。）\n\n{msg}"
     sys.stdout.write(
         json.dumps({"decision": "block", "reason": reason}, ensure_ascii=False)
     )
@@ -212,12 +247,14 @@ def mode_deliver():
 # CLI / slash-command modes
 # --------------------------------------------------------------------------- #
 def mode_add():
-    """Manual add. Without a session id it lands in _global (won't auto-drain)."""
+    """Manual add (testing). Without a session id it lands in _global."""
     if len(sys.argv) >= 3:
-        message = " ".join(sys.argv[2:])
+        message = " ".join(sys.argv[3:]) if sys.argv[2] == "--session" else " ".join(sys.argv[2:])
     else:
         message = sys.stdin.read()
-    sid = os.environ.get("CLAUDE_SESSION_ID", "")
+    sid = ""
+    if len(sys.argv) >= 4 and sys.argv[2] == "--session":
+        sid = sys.argv[3]
     q_add(message, sid)
     where = "本会话" if sid else "全局(_global，不会自动投递)"
     pending = len(_pending(sid))
@@ -243,8 +280,14 @@ def mode_list():
 
 
 def mode_clear():
+    # also clear busy markers
+    for d in glob.glob(os.path.join(QUEUE_DIR, "*")):
+        try:
+            os.remove(os.path.join(d, ".busy"))
+        except OSError:
+            pass
     q_clear("")
-    print("🧹 已清空所有会话的队列")
+    print("🧹 已清空所有会话的队列（及忙标记）")
 
 
 def mode_count():
