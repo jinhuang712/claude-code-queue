@@ -30,6 +30,7 @@ import time
 QUEUE_DIR = os.path.expanduser(
     os.environ.get("CLAUDE_QUEUE_DIR", "~/.claude/queue")
 )
+SESSIONS_DIR = os.path.expanduser("~/.claude/sessions")
 PREFIX = "/queue"
 GLOBAL = "_global"
 DEBUG = os.environ.get("CLAUDE_QUEUE_DEBUG", "") == "1"
@@ -135,8 +136,23 @@ def _clear_busy(session_id):
         pass
 
 
-def _is_busy(session_id):
-    """True iff a turn appears to be active right now (marker fresh)."""
+def _session_status(session_id):
+    """Claude Code's own status for this session, read from sessions/*.json."""
+    if not session_id:
+        return "unknown"
+    for path in glob.glob(os.path.join(SESSIONS_DIR, "*.json")):
+        try:
+            with open(path, "r", encoding="utf-8") as fh:
+                data = json.load(fh)
+        except (OSError, ValueError):
+            continue
+        if data.get("sessionId") == session_id:
+            return data.get("status", "unknown")
+    return "unknown"
+
+
+def _marker_set(session_id):
+    """True iff our busy marker exists and is fresh (not a crashed turn)."""
     path = _busy_path(session_id)
     try:
         age = time.time() - os.path.getmtime(path)
@@ -149,6 +165,21 @@ def _is_busy(session_id):
             pass
         return False
     return True
+
+
+def _is_busy(session_id):
+    """Both signals must agree a turn is active.
+
+    - status == "busy": Claude Code knows when it's really working (covers
+      interrupts and pure generation, which fire no hooks).
+    - marker set: we set it on turn start / clear it on a normal Stop (covers
+      status staleness right after a Stop fires).
+
+    Either alone has a blind spot; the AND closes both. In particular:
+    interrupt leaves the marker stuck, but status flips to idle -> not busy;
+    a stale "busy" status after Stop is offset by the cleared marker.
+    """
+    return _session_status(session_id) == "busy" and _marker_set(session_id)
 
 
 # --------------------------------------------------------------------------- #

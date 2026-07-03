@@ -32,11 +32,13 @@ interrupt — just queue this for when you finish."* This skill adds that.
 The queue is **per-session** (`~/.claude/queue/<session_id>/`), so an item is
 only ever picked up by the session that queued it — no cross-session theft.
 
-Busy detection uses a **self-maintained marker** rather than Claude Code's
-`status` field, which can be stale and dead-end messages (block while actually
-idle → no turn → never drained). The marker is set when a real turn starts and
-cleared when the queue drains; a marker older than 1 hour is treated as stale
-(crashed/abandoned turn).
+Busy detection requires **both** a self-maintained marker **and** Claude Code's
+`status == "busy"` — each covers the other's blind spot. The marker is set when
+a real turn starts and cleared when the queue drains, so it guards against a
+stale `status` right after a `Stop`. The `status` field catches **interrupts**
+(Esc), which leave the marker stuck but flip `status` to `idle`. Either signal
+alone dead-ends or interrupts; the AND closes both. A marker older than 1 hour
+is treated as stale (crashed/abandoned turn).
 
 This is the **B-class** queue (single-session, don't-interrupt), distinct from
 rate-limit batching tools like `JCSnap/claude-code-queue` (which survive 5-hour

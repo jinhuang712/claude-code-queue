@@ -33,10 +33,10 @@ Three pieces cooperate:
 | `hooks/queue-hook.py deliver` | `Stop` | When a turn ends, pops the oldest queued item **for this session**, prints `🔔 queued message popped`, and feeds it back so Claude auto-starts it. Re-sets the busy marker; clears it when the queue empties. |
 
 The queue is **per-session** (`~/.claude/queue/<session_id>/`), so an item is
-only picked up by the session that queued it. Busy/idle is decided by a
-**self-maintained marker** (not Claude Code's `status` field, which can be stale
-and dead-end messages): set when a real turn starts, cleared when the queue
-drains; older than 1 hour is treated as stale.
+only picked up by the session that queued it. Busy/idle requires **both** a
+self-maintained marker **and** Claude Code's `status == "busy"` — the marker
+guards against stale status after a `Stop`, and `status` catches interrupts
+(Esc), which leave the marker stuck but flip status to idle.
 
 ## When Claude should suggest `/queue`
 
