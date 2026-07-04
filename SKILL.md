@@ -1,6 +1,6 @@
 ---
 name: claude-code-queue
-description: Codex-style prompt queue for Claude Code. Use when the user wants to defer a follow-up until after the current turn — type /queue <request> to queue it instead of interrupting. Busy → waiting area (zero interruption), popped automatically when the turn ends; idle → handled immediately.
+description: A prompt queue for Claude Code. Use when the user wants to defer a follow-up until after the current turn — type /queue <request> to queue it instead of interrupting. Busy → waiting area (zero interruption), popped automatically when the turn ends; idle → handled immediately.
 ---
 
 # claude-code-queue

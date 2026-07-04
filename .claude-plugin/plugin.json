@@ -2,10 +2,10 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "claude-code-queue",
   "displayName": "claude-code-queue",
-  "description": "Codex-style prompt queue. /queue defers a message until after the current turn instead of injecting it at the next tool-call boundary.",
+  "description": "A prompt queue. /queue defers a message until after the current turn instead of injecting it at the next tool-call boundary.",
   "author": { "name": "Huang Jin", "url": "https://github.com/jinhuang712" },
   "repository": "https://github.com/jinhuang712/claude-code-queue",
   "homepage": "https://github.com/jinhuang712/claude-code-queue",
   "license": "MIT",
-  "keywords": ["queue", "codex", "prompt", "steer", "hook"]
+  "keywords": ["queue", "prompt", "defer", "hook"]
 }

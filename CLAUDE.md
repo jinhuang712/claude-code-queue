@@ -1,7 +1,7 @@
 # claude-code-queue — dev notes
 
 This repo is a Claude Code **plugin** (a skill + hooks + a slash command) that
-adds a Codex-style prompt queue. `CLAUDE.md` is the entry point for anyone
+adds a prompt queue. `CLAUDE.md` is the entry point for anyone
 (human or agent) working on this repo.
 
 ## Layout

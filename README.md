@@ -1,12 +1,12 @@
 # claude-code-queue
 
-> Codex-style **queue** for Claude Code: `/queue …` runs *after* the current
+> A **prompt queue** for Claude Code: `/queue …` runs *after* the current
 > turn when Claude is busy — not injected at the next tool-call boundary.
 
 ## Why
 
 Pressing Enter while Claude Code is mid-turn injects your message at the next
-tool-call boundary (Codex calls this *steer*) — it interrupts and redirects the
+tool-call boundary — it interrupts and redirects the
 running task. This skill adds the missing *queue*: the message waits, then runs
 when the turn ends, in the same session.
 

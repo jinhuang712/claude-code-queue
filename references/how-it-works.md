@@ -1,9 +1,9 @@
 # How it works
 
-claude-code-queue gives Claude Code a Codex-style **queue**: a message typed
+claude-code-queue gives Claude Code a **prompt queue**: a message typed
 while Claude is busy is held in a waiting area and runs only after the current
-turn ends — it is **not** injected at the next tool-call boundary (Claude Code's
-default, a.k.a. Codex "steer").
+turn ends — it is **not** injected at the next tool-call boundary (which is how
+Claude Code handles queued input by default).
 
 ## Three pieces
 

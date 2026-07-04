@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """claude-code-queue — per-session FIFO prompt queue for Claude Code.
 
-Gives Codex-style "queue" semantics: a `/queue` message typed while Claude is
+Gives queue semantics: a `/queue` message typed while Claude is
 busy goes to a waiting area and does NOT interrupt the current turn. When the
 turn finishes, the oldest queued item is popped ("queued message popped") and
 auto-starts — in the SAME session.
