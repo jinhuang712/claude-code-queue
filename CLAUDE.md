@@ -1,20 +1,30 @@
 # claude-code-queue — dev notes
 
-This repo is a Claude Code **skill** (with hooks + a slash command) that adds a
-Codex-style prompt queue. `CLAUDE.md` is the entry point for anyone (human or
-agent) working on this repo.
+This repo is a Claude Code **plugin** (a skill + hooks + a slash command) that
+adds a Codex-style prompt queue. `CLAUDE.md` is the entry point for anyone
+(human or agent) working on this repo.
 
 ## Layout
 
-- `SKILL.md` — the skill definition Claude loads (frontmatter + behavior).
-- `hooks/queue-hook.py` — the whole mechanism. Two modes: `enqueue`
+- `.claude-plugin/plugin.json` — plugin manifest (name, metadata; no `version`
+  → git SHA versioning, every commit is a new release).
+- `.claude-plugin/marketplace.json` — makes this repo its own single-plugin
+  marketplace (install via `/plugin marketplace add jinhuang712/claude-code-queue`).
+- `hooks/hooks.json` — declares the `UserPromptSubmit` + `Stop` hooks; commands
+  use `${CLAUDE_PLUGIN_ROOT}` so the plugin is self-contained.
+- `hooks/queue-hook.py` — the whole mechanism. Modes: `enqueue`
   (UserPromptSubmit) and `deliver` (Stop). Also the CLI for manual ops.
-- `hooks/settings.example.json` — the hook config snippet to merge into
-  `~/.claude/settings.json` (or use `scripts/install.sh`).
 - `commands/queue.md` — the `/queue` slash command (handles the idle path).
-- `scripts/install.sh` / `uninstall.sh` — idempotent install/remove.
+- `SKILL.md` — the skill definition Claude loads (frontmatter + behavior).
 - `references/` — design + troubleshooting deep dives.
 - `tests/test_queue_hook.py` — exercises the hook via subprocess.
+
+## Install model
+
+Distributed as a plugin (NOT npx/npm, NOT a settings.json-patching installer).
+The plugin system auto-registers `hooks/hooks.json` on enable — never manually
+edit the user's `settings.json`. Paths resolve via `${CLAUDE_PLUGIN_ROOT}`.
+Users install with `/plugin marketplace add` + `/plugin install`.
 
 ## The core contract (don't break these)
 
@@ -41,5 +51,8 @@ agent) working on this repo.
 
 - One concern per commit. Commit messages explain *why* (the failure mode the
   change addresses), not just *what*.
-- No hardcoded absolute paths in shipped files — `install.sh` derives them;
-  `settings.example.json` uses a placeholder.
+- No hardcoded absolute paths in shipped files — hook commands use
+  `${CLAUDE_PLUGIN_ROOT}`; the plugin is self-contained and copied to the cache
+  on install, so absolute paths would break.
+- Don't add an `install.sh`/settings-patching layer — the plugin system handles
+  install and hook registration.

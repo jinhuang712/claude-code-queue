@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-marketplace.json",
+  "name": "claude-code-queue",
+  "owner": { "name": "Huang Jin" },
+  "description": "Codex-style prompt queue for Claude Code — the claude-code-queue plugin and its marketplace.",
+  "plugins": [
+    {
+      "name": "claude-code-queue",
+      "source": "./",
+      "description": "Codex-style prompt queue for Claude Code.",
+      "author": { "name": "Huang Jin" },
+      "repository": "https://github.com/jinhuang712/claude-code-queue",
+      "license": "MIT",
+      "keywords": ["queue", "codex", "prompt", "steer", "hook"],
+      "category": "productivity"
+    }
+  ]
+}

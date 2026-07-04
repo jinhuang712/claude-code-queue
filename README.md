@@ -17,15 +17,28 @@ when the turn ends, in the same session.
 
 ## Install
 
-```bash
-git clone <this-repo> ~/dev/skills/claude-code-queue
-cd ~/dev/skills/claude-code-queue
-./scripts/install.sh        # copies hook + command + skill, wires settings.json
+In Claude Code:
+
+```text
+/plugin marketplace add jinhuang712/claude-code-queue
+/plugin install claude-code-queue@claude-code-queue
 ```
 
-Then restart Claude Code so the hooks load. Prefer to wire it yourself? Merge
-[`hooks/settings.example.json`](hooks/settings.example.json) into
-`~/.claude/settings.json` (replace the placeholder path).
+Restart Claude Code (or `/reload-plugins`) so the hooks load. The plugin
+auto-registers its hooks — **no `settings.json` editing needed.**
+
+Updates: `/plugin update claude-code-queue@claude-code-queue` (or just push —
+with no `version` set, every commit is a new version).
+
+<details><summary>Manual / dev install (no marketplace)</summary>
+
+Clone into the skills dir — loads as `claude-code-queue@skills-dir`:
+
+```bash
+git clone https://github.com/jinhuang712/claude-code-queue ~/.claude/skills/claude-code-queue
+```
+
+</details>
 
 ## Usage
 
@@ -92,14 +105,15 @@ python3 ~/.claude/hooks/queue-hook.py add "…"    # enqueue to _global (won't a
 
 ## Core Files
 
+- `.claude-plugin/plugin.json` — plugin manifest (name, metadata).
+- `.claude-plugin/marketplace.json` — makes this repo a single-plugin marketplace.
 - `SKILL.md` — the skill definition Claude loads.
+- `hooks/hooks.json` — declares the `UserPromptSubmit` + `Stop` hooks (uses `${CLAUDE_PLUGIN_ROOT}`).
 - `hooks/queue-hook.py` — the whole mechanism (`enqueue` + `deliver` + CLI).
-- `hooks/settings.example.json` — hook config snippet to merge into settings.
 - `commands/queue.md` — the `/queue` slash command (idle path).
-- `scripts/install.sh` / `uninstall.sh` — idempotent install / remove.
 - `references/` — [how-it-works](references/how-it-works.md) · [troubleshooting](references/troubleshooting.md).
 - `tests/` — pytest suite (`make test`).
-- `CLAUDE.md` — dev notes for anyone working on this repo.
+- `CLAUDE.md` — dev notes.
 
 ## License
 
