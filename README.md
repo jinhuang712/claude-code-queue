@@ -38,6 +38,58 @@ Then restart Claude Code so the hooks load. Prefer to wire it yourself? Merge
 
 Shell access: `python3 ~/.claude/hooks/queue-hook.py list \| count \| clear \| add "…"`.
 
+## Examples
+
+**Queue a follow-up while Claude is busy** (the main use case — no interruption):
+
+```text
+# Claude is mid-turn refactoring auth.py. Line up the next task without
+# cutting in:
+/queue then run the test suite and fix anything that breaks
+# → 📝 Queued (runs after the current turn, 1 pending): then run the test…
+# Claude keeps working; when the turn ends:
+# → 🔔 queued message popped (queue empty): then run the test suite…
+#   …and it auto-starts.
+```
+
+**Line up several follow-ups** (FIFO, one per turn):
+
+```text
+/queue update the README with the new flag
+/queue commit and push
+# queue: [update the README…] → [commit and push]
+```
+
+**A real prompt preempts the queue** — normal (non-`/queue`) prompts submitted
+while busy always run *before* deferred ones:
+
+```text
+/queue polish the docs later              # deferred
+actually fix this blocking bug first      # real prompt — runs first
+```
+
+**Idle `/queue`** is just a normal prompt (nothing to wait behind):
+
+```text
+/queue generate a type for the config
+# handled immediately, no waiting-area ceremony
+```
+
+**Inspect / clear**:
+
+```text
+/queue           # show this session's queue
+/queue clear     # empty this session's queue
+```
+
+```bash
+# shell CLI (works outside Claude Code too)
+python3 ~/.claude/hooks/queue-hook.py list       # all sessions' pending items
+python3 ~/.claude/hooks/queue-hook.py count      # total pending
+python3 ~/.claude/hooks/queue-hook.py clear      # empty everything (all sessions)
+python3 ~/.claude/hooks/queue-hook.py add "…"    # enqueue to _global (won't auto-drain)
+```
+
 ## Directory structure
 
 - `SKILL.md` — the skill definition Claude loads.
