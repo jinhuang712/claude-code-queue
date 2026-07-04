@@ -3,6 +3,8 @@
 > A **prompt queue** for Claude Code: `/queue …` runs *after* the current
 > turn when Claude is busy — not injected at the next tool-call boundary.
 
+📄 **Landing page**: [English](https://jinhuang712.github.io/claude-code-queue/en_US.html) · [中文](https://jinhuang712.github.io/claude-code-queue/cn_ZH.html)
+
 ## Why
 
 Pressing Enter while Claude Code is mid-turn injects your message at the next
