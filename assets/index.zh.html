@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>claude-code-queue — Claude Code 的排队工具</title>
+<meta name="description" content="Claude Code 的 Codex 式队列。/queue 把消息延后到当前轮结束后执行，而不是在下一个 tool-call 边界插进去。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAF8F3; --paper-2:#F2EEE3; --ink:#1B1B1F; --ink-2:#565660;
+    --rule:#E4DFD0; --amber:#B4530A; --amber-soft:#F6E8D2; --green:#2F7D4F;
+    --term-bg:#16161A; --term-ink:#E8E6E1; --term-amber:#E0A23B;
+    --term-green:#5BC587; --term-dim:#8A8A95;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',system-ui,'PingFang SC','Microsoft YaHei',sans-serif;line-height:1.7;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+  a{color:inherit}
+  a:focus-visible{outline:2px solid var(--amber);outline-offset:2px;border-radius:3px}
+
+  header.top{border-bottom:1px solid var(--rule);position:sticky;top:0;background:rgba(250,248,243,.92);backdrop-filter:saturate(140%) blur(8px);z-index:5}
+  header.top .row{display:flex;align-items:center;justify-content:space-between;padding:16px 0}
+  .brand{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:15px;letter-spacing:-.01em}
+  .brand .dot{color:var(--amber)}
+  .lang{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--ink-2);text-decoration:none;border:1px solid var(--rule);padding:6px 13px;border-radius:999px;transition:border-color .15s,color .15s}
+  .lang:hover{color:var(--ink);border-color:var(--ink-2)}
+
+  .hero{padding:84px 0 60px;border-bottom:1px solid var(--rule)}
+  .hero .grid{display:grid;grid-template-columns:1fr;gap:40px}
+  @media(min-width:900px){.hero .grid{grid-template-columns:1.05fr .95fr;align-items:center;gap:48px}}
+  .hero h1{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:clamp(38px,7.5vw,68px);line-height:1.05;letter-spacing:-.02em;margin:0 0 22px}
+  .hero h1 .q{color:var(--amber)}
+  .hero .lead{font-size:clamp(16px,2.1vw,20px);color:var(--ink-2);max-width:44ch;margin:0 0 30px}
+  .hero .lead strong{color:var(--ink)}
+  code,pre{font-family:'IBM Plex Mono',monospace}
+  :not(pre)>code{background:var(--paper-2);padding:2px 6px;border-radius:4px;font-size:.9em;border:1px solid var(--rule)}
+  pre{background:var(--term-bg);color:var(--term-ink);padding:16px 18px;border-radius:10px;overflow-x:auto;font-size:13px;line-height:1.75;margin:0}
+  .prompt{color:var(--term-green)}
+  pre .amber{color:var(--term-amber)}
+  pre .dim{color:var(--term-dim)}
+
+  .quick{margin-top:8px}
+  .quick h3{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);margin:0 0 10px;font-weight:500}
+
+  .term{background:var(--term-bg);border-radius:12px;overflow:hidden;box-shadow:0 30px 60px -28px rgba(28,20,10,.45);font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.75}
+  .term .bar{display:flex;gap:7px;padding:12px 14px;background:#0E0E12}
+  .term .bar i{width:11px;height:11px;border-radius:50%;display:inline-block}
+  .term .bar i:nth-child(1){background:#FF5F57}
+  .term .bar i:nth-child(2){background:#FEBC2E}
+  .term .bar i:nth-child(3){background:#28C840}
+  .term .body{padding:18px 20px 22px;color:var(--term-ink)}
+  .term .out{color:var(--term-dim)}
+  .term .amber{color:var(--term-amber)}
+  .term .green{color:var(--term-green)}
+  .term .cursor{display:inline-block;width:8px;height:15px;background:var(--term-ink);vertical-align:-2px;animation:blink 1.1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+  @media(prefers-reduced-motion:reduce){.term .cursor{animation:none}*{transition:none!important}}
+
+  section{padding:68px 0;border-bottom:1px solid var(--rule)}
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--amber);margin:0 0 12px}
+  section h2{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:clamp(22px,3.4vw,29px);letter-spacing:-.01em;margin:0 0 14px}
+  section p.kicker{color:var(--ink-2);max-width:68ch;margin:0;font-size:16px}
+
+  .behaviors{margin-top:30px}
+  .behavior{display:grid;grid-template-columns:40px 1fr;gap:18px;padding:22px 0;border-top:1px solid var(--rule);align-items:start}
+  .behavior:last-child{border-bottom:1px solid var(--rule)}
+  .behavior .marker{display:flex;gap:6px;padding-top:7px}
+  .marker .d{width:11px;height:11px;border-radius:50%}
+  .d-run{background:var(--green)}
+  .d-wait{background:transparent;box-shadow:inset 0 0 0 2px var(--amber)}
+  .behavior h3{margin:0 0 4px;font-size:16px;font-weight:600}
+  .behavior p{margin:0;color:var(--ink-2);max-width:60ch}
+
+  .example{margin:30px 0}
+  .example:first-of-type{margin-top:8px}
+  .example h4{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;margin:0 0 6px}
+  .example .cap{font-size:14px;color:var(--ink-2);margin:0 0 12px;max-width:60ch}
+
+  footer{padding:44px 0 72px;color:var(--ink-2);font-size:14px}
+  footer .row{display:flex;gap:24px;flex-wrap:wrap;align-items:center}
+  footer a{text-decoration:none;border-bottom:1px solid var(--rule);padding-bottom:1px}
+  footer a:hover{border-color:var(--amber);color:var(--ink)}
+  .muted{color:var(--ink-2)}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap row">
+    <div class="brand">claude-code<span class="dot">·</span>queue</div>
+    <a class="lang" href="index.html" hreflang="en">English</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap grid">
+    <div>
+      <h1>排队<span class="q">，</span>不插队。</h1>
+      <p class="lead">Claude Code 的 Codex 式队列。忙时输入 <code>/queue …</code>，消息会先等候——<strong>本轮跑完后</strong>才执行，而不是在下一个 tool-call 边界被插进去。</p>
+      <div class="quick">
+        <h3>安装</h3>
+<pre><span class="prompt">$</span> /plugin marketplace add jinhuang712/claude-code-queue
+<span class="prompt">$</span> /plugin install claude-code-queue@claude-code-queue
+<span class="prompt">$</span> /reload-plugins</pre>
+      </div>
+    </div>
+    <div class="term" aria-label="terminal demo">
+      <div class="bar"><i></i><i></i><i></i></div>
+      <div class="body">
+        <div><span class="prompt">/queue</span> then run the tests and fix failures</div>
+        <div class="amber">📝 Queued (runs after the current turn, 1 pending): then run the tests…</div>
+        <div class="out">… Claude 继续干活，不受打扰 …</div>
+        <div class="amber">🔔 queued message popped (queue empty): then run the tests and fix failures</div>
+        <div class="green">✓ auto-started</div>
+        <div><span class="cursor"></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">为什么</p>
+    <h2>按回车，不该把当前任务带偏。</h2>
+    <p class="kicker">默认情况下，Claude Code 忙时你发的消息会在下一个 tool-call 边界被插进去（Codex 把这叫 <em>steer</em>）——它会打断、带偏正在跑的任务。claude-code-queue 补上了缺失的 <em>queue</em>：消息先等候，等本轮结束、在<strong>同一会话</strong>里再执行。</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">行为</p>
+    <h2>排队的消息会怎么处理</h2>
+    <div class="behaviors">
+      <div class="behavior">
+        <div class="marker"><span class="d d-run"></span></div>
+        <div><h3>忙时 → 等候区</h3><p>当前轮不会被打断。本轮结束后自动 pop 并接手执行。</p></div>
+      </div>
+      <div class="behavior">
+        <div class="marker"><span class="d d-wait"></span><span class="d d-wait"></span><span class="d d-wait"></span></div>
+        <div><h3>FIFO，一轮一条</h3><p>多条按入队顺序排，一轮一条，在同一会话内——不会被别的会话抢走。</p></div>
+      </div>
+      <div class="behavior">
+        <div class="marker"><span class="d d-run"></span></div>
+        <div><h3>真实 prompt 抢占</h3><p>忙时发的普通（不带 <code>/queue</code>）请求，永远排在排队项前面。</p></div>
+      </div>
+      <div class="behavior">
+        <div class="marker"><span class="d d-wait"></span></div>
+        <div><h3>闲时 → 立即</h3><p>没有在跑的任务，直接当作普通请求处理。</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">用法示例</p>
+    <h2>怎么用</h2>
+
+    <div class="example">
+      <h4>忙时排队一个后续任务</h4>
+      <p class="cap">Claude 正忙。把下一个任务排进去，不打断：</p>
+<pre><span class="prompt">/queue</span> then run the test suite and fix anything that breaks
+<span class="amber">📝 Queued (runs after the current turn, 1 pending): then run the test…</span></pre>
+    </div>
+
+    <div class="example">
+      <h4>排多条（FIFO，一轮一条）</h4>
+<pre><span class="prompt">/queue</span> update the README with the new flag
+<span class="prompt">/queue</span> commit and push</pre>
+    </div>
+
+    <div class="example">
+      <h4>真实 prompt 抢占</h4>
+      <p class="cap">普通请求排在排队项前面：</p>
+<pre><span class="prompt">/queue</span> polish the docs later
+actually fix this blocking bug first   <span class="amber"># 这个先跑</span></pre>
+    </div>
+
+    <div class="example">
+      <h4>查看 / 清空</h4>
+<pre><span class="prompt">/queue</span>          <span class="amber"># 查看本会话队列</span>
+<span class="prompt">/queue</span> clear    <span class="amber"># 清空</span></pre>
+    </div>
+
+    <p class="kicker" style="margin-top:34px;font-size:14px">作为原生 plugin 分发——不用改 <code>settings.json</code>，不用 npx。完整机制、设计说明和测试见 <a href="https://github.com/jinhuang712/claude-code-queue" style="border-bottom:1px solid var(--rule)">仓库</a>。</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap row">
+    <a href="https://github.com/jinhuang712/claude-code-queue">GitHub → jinhuang712/claude-code-queue</a>
+    <a href="index.html">English</a>
+    <span class="muted">MIT 协议</span>
+  </div>
+</footer>
+</body>
+</html>

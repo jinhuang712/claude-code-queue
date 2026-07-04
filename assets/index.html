@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>claude-code-queue — a queue for Claude Code</title>
+<meta name="description" content="Codex-style prompt queue for Claude Code. /queue defers a message until after the current turn instead of injecting it at the next tool-call boundary.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAF8F3; --paper-2:#F2EEE3; --ink:#1B1B1F; --ink-2:#565660;
+    --rule:#E4DFD0; --amber:#B4530A; --amber-soft:#F6E8D2; --green:#2F7D4F;
+    --term-bg:#16161A; --term-ink:#E8E6E1; --term-amber:#E0A23B;
+    --term-green:#5BC587; --term-dim:#8A8A95;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+  a{color:inherit}
+  a:focus-visible{outline:2px solid var(--amber);outline-offset:2px;border-radius:3px}
+
+  header.top{border-bottom:1px solid var(--rule);position:sticky;top:0;background:rgba(250,248,243,.92);backdrop-filter:saturate(140%) blur(8px);z-index:5}
+  header.top .row{display:flex;align-items:center;justify-content:space-between;padding:16px 0}
+  .brand{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:15px;letter-spacing:-.01em}
+  .brand .dot{color:var(--amber)}
+  .lang{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--ink-2);text-decoration:none;border:1px solid var(--rule);padding:6px 13px;border-radius:999px;transition:border-color .15s,color .15s}
+  .lang:hover{color:var(--ink);border-color:var(--ink-2)}
+
+  .hero{padding:84px 0 60px;border-bottom:1px solid var(--rule)}
+  .hero .grid{display:grid;grid-template-columns:1fr;gap:40px}
+  @media(min-width:900px){.hero .grid{grid-template-columns:1.05fr .95fr;align-items:center;gap:48px}}
+  .hero h1{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:clamp(40px,8vw,74px);line-height:1.02;letter-spacing:-.035em;margin:0 0 22px}
+  .hero h1 .q{color:var(--amber)}
+  .hero .lead{font-size:clamp(17px,2.2vw,21px);color:var(--ink-2);max-width:42ch;margin:0 0 30px}
+  .hero .lead strong{color:var(--ink)}
+  code,pre{font-family:'IBM Plex Mono',monospace}
+  :not(pre)>code{background:var(--paper-2);padding:2px 6px;border-radius:4px;font-size:.9em;border:1px solid var(--rule)}
+  pre{background:var(--term-bg);color:var(--term-ink);padding:16px 18px;border-radius:10px;overflow-x:auto;font-size:13px;line-height:1.75;margin:0}
+  .prompt{color:var(--term-green)}
+  pre .amber{color:var(--term-amber)}
+  pre .dim{color:var(--term-dim)}
+
+  .quick{margin-top:8px}
+  .quick h3{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);margin:0 0 10px;font-weight:500}
+
+  /* the signature terminal */
+  .term{background:var(--term-bg);border-radius:12px;overflow:hidden;box-shadow:0 30px 60px -28px rgba(28,20,10,.45);font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.75}
+  .term .bar{display:flex;gap:7px;padding:12px 14px;background:#0E0E12}
+  .term .bar i{width:11px;height:11px;border-radius:50%;display:inline-block}
+  .term .bar i:nth-child(1){background:#FF5F57}
+  .term .bar i:nth-child(2){background:#FEBC2E}
+  .term .bar i:nth-child(3){background:#28C840}
+  .term .body{padding:18px 20px 22px;color:var(--term-ink)}
+  .term .out{color:var(--term-dim)}
+  .term .amber{color:var(--term-amber)}
+  .term .green{color:var(--term-green)}
+  .term .cursor{display:inline-block;width:8px;height:15px;background:var(--term-ink);vertical-align:-2px;animation:blink 1.1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+  @media(prefers-reduced-motion:reduce){.term .cursor{animation:none}*{transition:none!important}}
+
+  section{padding:68px 0;border-bottom:1px solid var(--rule)}
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--amber);margin:0 0 12px}
+  section h2{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:clamp(23px,3.6vw,31px);letter-spacing:-.02em;margin:0 0 14px}
+  section p.kicker{color:var(--ink-2);max-width:68ch;margin:0;font-size:17px}
+
+  .behaviors{margin-top:30px}
+  .behavior{display:grid;grid-template-columns:40px 1fr;gap:18px;padding:22px 0;border-top:1px solid var(--rule);align-items:start}
+  .behavior:last-child{border-bottom:1px solid var(--rule)}
+  .behavior .marker{display:flex;gap:6px;padding-top:7px}
+  .marker .d{width:11px;height:11px;border-radius:50%}
+  .d-run{background:var(--green)}
+  .d-wait{background:transparent;box-shadow:inset 0 0 0 2px var(--amber)}
+  .behavior h3{margin:0 0 4px;font-size:17px;font-weight:600}
+  .behavior p{margin:0;color:var(--ink-2);max-width:60ch}
+
+  .example{margin:30px 0}
+  .example:first-of-type{margin-top:8px}
+  .example h4{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;margin:0 0 6px}
+  .example .cap{font-size:14px;color:var(--ink-2);margin:0 0 12px;max-width:60ch}
+
+  footer{padding:44px 0 72px;color:var(--ink-2);font-size:14px}
+  footer .row{display:flex;gap:24px;flex-wrap:wrap;align-items:center}
+  footer a{text-decoration:none;border-bottom:1px solid var(--rule);padding-bottom:1px}
+  footer a:hover{border-color:var(--amber);color:var(--ink)}
+  .muted{color:var(--ink-2)}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap row">
+    <div class="brand">claude-code<span class="dot">·</span>queue</div>
+    <a class="lang" href="index.zh.html" hreflang="zh">中文</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap grid">
+    <div>
+      <h1>queue<span class="q">,</span> not steer.</h1>
+      <p class="lead">A Codex-style prompt queue for Claude Code. Type <code>/queue …</code> while Claude is busy and the message waits — it runs <strong>after</strong> the current turn, instead of being injected at the next tool-call boundary.</p>
+      <div class="quick">
+        <h3>Install</h3>
+<pre><span class="prompt">$</span> /plugin marketplace add jinhuang712/claude-code-queue
+<span class="prompt">$</span> /plugin install claude-code-queue@claude-code-queue
+<span class="prompt">$</span> /reload-plugins</pre>
+      </div>
+    </div>
+    <div class="term" aria-label="terminal demo">
+      <div class="bar"><i></i><i></i><i></i></div>
+      <div class="body">
+        <div><span class="prompt">/queue</span> then run the tests and fix failures</div>
+        <div class="amber">📝 Queued (runs after the current turn, 1 pending): then run the tests…</div>
+        <div class="out">… Claude keeps working, uninterrupted …</div>
+        <div class="amber">🔔 queued message popped (queue empty): then run the tests and fix failures</div>
+        <div class="green">✓ auto-started</div>
+        <div><span class="cursor"></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">Why</p>
+    <h2>Pressing Enter mid-turn shouldn't derail the turn.</h2>
+    <p class="kicker">By default, a message sent while Claude Code is mid-turn is injected at the next tool-call boundary (Codex calls this <em>steer</em>) — it interrupts and redirects the running task. claude-code-queue adds the missing <em>queue</em>: the message waits, then runs when the turn ends, in the same session.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">Behavior</p>
+    <h2>How a queued message is treated</h2>
+    <div class="behaviors">
+      <div class="behavior">
+        <div class="marker"><span class="d d-run"></span></div>
+        <div><h3>Busy → waiting area</h3><p>The current turn is not interrupted. The message is popped and auto-started when it finishes.</p></div>
+      </div>
+      <div class="behavior">
+        <div class="marker"><span class="d d-wait"></span><span class="d d-wait"></span><span class="d d-wait"></span></div>
+        <div><h3>FIFO, one per turn</h3><p>Multiple items drain in order, one turn each, in the same session — never stolen by another session.</p></div>
+      </div>
+      <div class="behavior">
+        <div class="marker"><span class="d d-run"></span></div>
+        <div><h3>Real prompts preempt</h3><p>A normal (non-<code>/queue</code>) prompt submitted while busy always runs before deferred items.</p></div>
+      </div>
+      <div class="behavior">
+        <div class="marker"><span class="d d-wait"></span></div>
+        <div><h3>Idle → immediate</h3><p>Nothing to wait behind — handled at once as a normal turn.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">Examples</p>
+    <h2>Using it</h2>
+
+    <div class="example">
+      <h4>Queue a follow-up while busy</h4>
+      <p class="cap">Claude is mid-turn. Line up the next task without cutting in:</p>
+<pre><span class="prompt">/queue</span> then run the test suite and fix anything that breaks
+<span class="amber">📝 Queued (runs after the current turn, 1 pending): then run the test…</span></pre>
+    </div>
+
+    <div class="example">
+      <h4>Line up several (FIFO, one per turn)</h4>
+<pre><span class="prompt">/queue</span> update the README with the new flag
+<span class="prompt">/queue</span> commit and push</pre>
+    </div>
+
+    <div class="example">
+      <h4>A real prompt preempts</h4>
+      <p class="cap">Normal prompts run before deferred ones:</p>
+<pre><span class="prompt">/queue</span> polish the docs later
+actually fix this blocking bug first   <span class="amber"># runs first</span></pre>
+    </div>
+
+    <div class="example">
+      <h4>Inspect / clear</h4>
+<pre><span class="prompt">/queue</span>          <span class="amber"># show this session's queue</span>
+<span class="prompt">/queue</span> clear    <span class="amber"># empty it</span></pre>
+    </div>
+
+    <p class="kicker" style="margin-top:34px;font-size:14px">Distributed as a native plugin — no <code>settings.json</code> editing, no npx. See the <a href="https://github.com/jinhuang712/claude-code-queue" style="border-bottom:1px solid var(--rule)">repo</a> for the full mechanism, design notes, and tests.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap row">
+    <a href="https://github.com/jinhuang712/claude-code-queue">GitHub → jinhuang712/claude-code-queue</a>
+    <a href="index.zh.html">中文</a>
+    <span class="muted">MIT licensed</span>
+  </div>
+</footer>
+</body>
+</html>
