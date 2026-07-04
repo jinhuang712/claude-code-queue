@@ -47,6 +47,19 @@ Since there's nothing to wait behind when idle, the hook just lets `/queue X`
 through and the slash command handles `X` as a **single normal turn**. The queue
 is only involved when Claude is actually busy.
 
+## Normal prompts preempt the queue
+
+A non-`/queue` prompt submitted while Claude is busy goes to **Claude Code's
+native queue** (prompts held until the turn ends). Without care, our `Stop`
+hook would drain our queue at every turn end and **preempt** that real prompt —
+deferred items cutting in front of the user's actual request.
+
+So the enqueue hook counts normal prompts submitted while busy
+(`~/.claude/queue/<sid>/.native`), and the `Stop` hook **yields** while that
+counter is positive — it allows the stop, Claude Code delivers the real prompt,
+and our queue only resumes once no real prompt is waiting. Net effect: a real
+prompt always runs before deferred `/queue` items.
+
 ## Why blocking (not "ack then continue")
 
 The whole point is zero interruption: a busy `/queue X` must not inject anything

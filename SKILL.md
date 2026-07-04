@@ -18,6 +18,8 @@ tool-call boundary.
   behind — no enqueue/pop round-trip).
 - Multiple items drain **FIFO**, one per turn, in the **same session** (no
   cross-session theft).
+- A **normal (non-`/queue`) prompt** submitted while busy preempts the queue —
+  real requests always run before deferred ones.
 
 Busy detection requires **both** `status == "busy"` **and** a self-maintained
 busy marker. Each signal alone has a blind spot — stale status right after a

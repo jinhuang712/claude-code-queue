@@ -138,3 +138,33 @@ def test_stale_busy_status_without_marker(tmp_path):
     # no marker (a normal Stop cleared it)
     rc, out, err = enqueue("/queue X", "s1", env)
     assert rc == 0
+
+
+# -- normal prompts preempt the queue -------------------------------------- #
+def test_normal_prompt_while_busy_increments_native_pending(tmp_path):
+    """A non-/queue prompt submitted while busy goes to Claude Code's native
+    queue. We must remember it exists so the Stop hook can yield to it."""
+    env = make_env(tmp_path, {"s1": "busy"})
+    enqueue("working", "s1", env)            # sets marker
+    enqueue("a real prompt", "s1", env)      # non-/queue, busy -> native pending
+    assert (tmp_path / "queue" / "s1" / ".native").read_text() == "1"
+
+
+def test_stop_yields_to_native_prompt_before_draining(tmp_path):
+    """If a native (non-/queue) prompt is pending, the Stop hook must NOT pop
+    our queue — let Claude Code deliver the real prompt first."""
+    env = make_env(tmp_path, {"s1": "busy"})
+    enqueue("working", "s1", env)
+    enqueue("/queue deferred", "s1", env)    # our queue: [deferred]
+    enqueue("real prompt", "s1", env)        # native pending: 1
+
+    rc, out, err = deliver("s1", env)
+    assert rc == 0 and out == ""              # yield (allow stop), no pop
+    # our item is still queued, native counter decremented
+    assert msgs(tmp_path, "s1") == ["deferred"]
+    assert (tmp_path / "queue" / "s1" / ".native").read_text() == "0"
+
+    # now the native prompt would run; after it, Stop drains our queue
+    rc, out, err = deliver("s1", env)
+    assert json.loads(out)["reason"] == "deferred"
+

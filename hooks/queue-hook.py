@@ -16,7 +16,9 @@ Wiring (see README / install.sh):
   UserPromptSubmit hook -> `queue-hook.py enqueue`
   Stop hook             -> `queue-hook.py deliver`
 
-Store layout: ~/.claude/queue/<session_id>/*.msg  + a `.busy` marker file.
+Store layout: ~/.claude/queue/<session_id>/*.msg  + `.busy` and `.native`
+marker files (.native counts normal prompts pending in Claude Code's own queue;
+the Stop hook yields to them so real prompts preempt deferred ones).
 
 Set CLAUDE_QUEUE_DEBUG=1 to log hook payloads to ~/.claude/queue/<sid>/.debug
 """
@@ -186,6 +188,40 @@ def _is_busy(session_id):
 
 
 # --------------------------------------------------------------------------- #
+# native-pending counter — normal (non-/queue) prompts submitted while busy
+# go to Claude Code's own queue. We count them so the Stop hook can yield
+# (let Claude deliver the real prompt) instead of draining our queue, which
+# would otherwise cut in front of the user's actual request.
+# --------------------------------------------------------------------------- #
+def _native_path(session_id):
+    return os.path.join(_session_dir(session_id), ".native")
+
+
+def _native_pending(session_id):
+    try:
+        with open(_native_path(session_id), "r") as fh:
+            return max(0, int(fh.read().strip() or "0"))
+    except (OSError, ValueError):
+        return 0
+
+
+def _inc_native(session_id):
+    os.makedirs(_session_dir(session_id), exist_ok=True)
+    with open(_native_path(session_id), "w") as fh:
+        fh.write(str(_native_pending(session_id) + 1))
+
+
+def _dec_native(session_id):
+    n = max(0, _native_pending(session_id) - 1)
+    try:
+        with open(_native_path(session_id), "w") as fh:
+            fh.write(str(n))
+    except OSError:
+        pass
+    return n
+
+
+# --------------------------------------------------------------------------- #
 # /queue prompt parsing
 # --------------------------------------------------------------------------- #
 def _parse(prompt):
@@ -220,7 +256,11 @@ def mode_enqueue():
 
     parsed = _parse(prompt)
     if parsed is None:
-        # A real (non-/queue) turn is starting → mark this session busy.
+        # A real (non-/queue) prompt. If Claude is busy it goes to Claude Code's
+        # native queue — remember it so the Stop hook yields to it (real prompts
+        # preempt our deferred queue). Either way, mark busy.
+        if _is_busy(session_id):
+            _inc_native(session_id)
         _set_busy(session_id)
         _log(session_id, f"enqueue(non-queue) busy=set prompt={prompt[:50]!r}")
         sys.exit(0)
@@ -259,6 +299,14 @@ def mode_deliver():
     """Stop hook: pop the next queued item for this session, or go idle."""
     data = _read_stdin_json()
     session_id = data.get("session_id", "")
+
+    # A real (non-/queue) prompt is waiting in Claude Code's native queue —
+    # yield so Claude delivers IT next, instead of letting our deferred items
+    # cut in front of the user's actual request.
+    if _native_pending(session_id) > 0:
+        _dec_native(session_id)
+        _log(session_id, "deliver -> YIELD to native prompt")
+        sys.exit(0)
 
     msg = q_pop(session_id)
     if not msg:
@@ -321,12 +369,13 @@ def mode_list():
 def mode_clear():
     # also clear busy markers
     for d in glob.glob(os.path.join(QUEUE_DIR, "*")):
-        try:
-            os.remove(os.path.join(d, ".busy"))
-        except OSError:
-            pass
+        for marker in (".busy", ".native"):
+            try:
+                os.remove(os.path.join(d, marker))
+            except OSError:
+                pass
     q_clear("")
-    print("🧹 Cleared all sessions' queues (and busy markers)")
+    print("🧹 Cleared all sessions' queues (and busy/native markers)")
 
 
 def mode_count():
