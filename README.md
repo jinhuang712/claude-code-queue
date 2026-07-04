@@ -90,7 +90,7 @@ python3 ~/.claude/hooks/queue-hook.py clear      # empty everything (all session
 python3 ~/.claude/hooks/queue-hook.py add "…"    # enqueue to _global (won't auto-drain)
 ```
 
-## Directory structure
+## Core Files
 
 - `SKILL.md` — the skill definition Claude loads.
 - `hooks/queue-hook.py` — the whole mechanism (`enqueue` + `deliver` + CLI).
