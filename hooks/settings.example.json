@@ -1,0 +1,25 @@
+{
+  "_comment": "Merge these hook entries into ~/.claude/settings.json. Replace <ABSOLUTE_SKILL_DIR> with the absolute path to this repo (e.g. /Users/you/dev/skills/claude-code-queue). Or just run scripts/install.sh, which does this for you idempotently.",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 '<ABSOLUTE_SKILL_DIR>/hooks/queue-hook.py' enqueue"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 '<ABSOLUTE_SKILL_DIR>/hooks/queue-hook.py' deliver"
+          }
+        ]
+      }
+    ]
+  }
+}

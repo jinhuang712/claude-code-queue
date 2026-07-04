@@ -1,61 +1,41 @@
 ---
 name: claude-code-queue
-description: Codex-style prompt queue for Claude Code — defer a message so it runs AFTER the current turn instead of being injected at the next tool-call boundary. Suggest /queue when the user wants to line up a follow-up task without interrupting work in progress.
+description: Codex-style prompt queue for Claude Code. Use when the user wants to defer a follow-up until after the current turn — type /queue <request> to queue it instead of interrupting. Busy → waiting area (zero interruption), popped automatically when the turn ends; idle → handled immediately.
 ---
 
 # claude-code-queue
 
-A FIFO prompt queue for Claude Code that gives you Codex-style **queue** semantics.
+A per-session FIFO prompt queue. `/queue <request>` defers a message so it runs
+**after** the current turn ends, instead of being injected at the next
+tool-call boundary.
 
-## The problem it solves
+## Behavior
 
-By default, when you press Enter while Claude Code is mid-turn, your message is
-injected at the **next tool-call boundary** — i.e. it interrupts and redirects
-the current task (this is Codex's "steer" behavior). There has been no way to
-say "don't interrupt, just run this after I finish."
+- **Busy** (a turn is running): `/queue X` → stored in the waiting area; the
+  current turn is **not interrupted**. When it ends, the oldest queued item is
+  popped (`🔔 queued message popped`) and auto-started.
+- **Idle**: `/queue X` → handled immediately as a normal turn (nothing to wait
+  behind — no enqueue/pop round-trip).
+- Multiple items drain **FIFO**, one per turn, in the **same session** (no
+  cross-session theft).
 
-This skill adds that. Type:
+Busy detection requires **both** `status == "busy"` **and** a self-maintained
+busy marker. Each signal alone has a blind spot — stale status right after a
+Stop, or a marker stuck after an interrupt (Esc) — so the AND closes both. Full
+rationale in `references/how-it-works.md`.
 
-```
-/queue 请帮我重构 auth 模块
-```
+## When to suggest `/queue`
 
-and the request is stored and delivered **only after the current turn ends**.
-
-## How it works
-
-Three pieces cooperate:
-
-| Piece | Event | Role |
-|---|---|---|
-| `hooks/queue-hook.py enqueue` | `UserPromptSubmit` | A non-`/queue` prompt **sets a busy marker** (a turn started). A `/queue` prompt: if busy → store + **block** (waiting area, zero interruption); if idle → let the slash command handle it now as a normal turn. |
-| `commands/queue.md` (`/queue`) | — | Idle path only — handle the request now, like a normal prompt. |
-| `hooks/queue-hook.py deliver` | `Stop` | When a turn ends, pops the oldest queued item **for this session**, prints `🔔 queued message popped`, and feeds it back so Claude auto-starts it. Re-sets the busy marker; clears it when the queue empties. |
-
-The queue is **per-session** (`~/.claude/queue/<session_id>/`), so an item is
-only picked up by the session that queued it. Busy/idle requires **both** a
-self-maintained marker **and** Claude Code's `status == "busy"` — the marker
-guards against stale status after a `Stop`, and `status` catches interrupts
-(Esc), which leave the marker stuck but flip status to idle.
-
-## When Claude should suggest `/queue`
-
-Offer `/queue` when the user:
-- mentions doing something "next", "after this", "once you finish", "then…";
-- sends a second request while you're visibly still working on the first;
+Offer it when the user:
+- says "next", "after this", "once you finish", "then…";
+- sends a second request while you're still working on the first;
 - is about to step away and wants follow-ups to run unattended.
 
-Do **not** use `/queue` for the current, primary task — only for things that
+Do **not** use `/queue` for the current primary task — only for things that
 should wait.
 
-## Manual operations
+## Handling a popped item
 
-```bash
-python3 ~/.claude/hooks/queue-hook.py list     # show pending
-python3 ~/.claude/hooks/queue-hook.py count    # just the count
-python3 ~/.claude/hooks/queue-hook.py clear    # empty the queue
-python3 ~/.claude/hooks/queue-hook.py add "…"  # enqueue from shell
-```
-
-Inside Claude Code, `/queue` (no args) also lists the queue, and
-`/queue clear` empties it.
+When the Stop hook pops a queued item, it's fed back as the reason to continue.
+**Just handle the request directly** — don't narrate "this was queued" or
+mention the queue mechanism.

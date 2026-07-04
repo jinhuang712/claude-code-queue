@@ -4,7 +4,8 @@
 set -euo pipefail
 
 CLAUDE_DIR="${CLAUDE_DIR:-$HOME/.claude}"
-SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# this script lives in scripts/; the repo root (hooks/, commands/, SKILL.md) is its parent
+SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 echo "Installing claude-code-queue → $CLAUDE_DIR"
 

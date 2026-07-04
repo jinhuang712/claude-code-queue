@@ -6,10 +6,11 @@ busy goes to a waiting area and does NOT interrupt the current turn. When the
 turn finishes, the oldest queued item is popped ("queued message popped") and
 auto-starts — in the SAME session.
 
-Busy detection uses a self-maintained marker (not Claude Code's `status` field,
-which can be stale): a non-`/queue` UserPromptSubmit sets it (a turn started),
-and a Stop with an empty queue clears it. A `/queue` while the marker is fresh
-is blocked; otherwise it's allowed through so it pops immediately.
+Busy detection = (Claude Code `status` == "busy") AND a self-maintained busy
+marker. Each signal alone has a blind spot (stale status after a Stop; marker
+stuck after an interrupt/Esc), so both must agree. A non-`/queue`
+UserPromptSubmit sets the marker; a Stop with an empty queue clears it. See
+references/how-it-works.md.
 
 Wiring (see README / install.sh):
   UserPromptSubmit hook -> `queue-hook.py enqueue`
@@ -30,7 +31,9 @@ import time
 QUEUE_DIR = os.path.expanduser(
     os.environ.get("CLAUDE_QUEUE_DIR", "~/.claude/queue")
 )
-SESSIONS_DIR = os.path.expanduser("~/.claude/sessions")
+SESSIONS_DIR = os.path.expanduser(
+    os.environ.get("CLAUDE_SESSIONS_DIR", "~/.claude/sessions")
+)
 PREFIX = "/queue"
 GLOBAL = "_global"
 DEBUG = os.environ.get("CLAUDE_QUEUE_DEBUG", "") == "1"
