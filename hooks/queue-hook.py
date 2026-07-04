@@ -232,7 +232,7 @@ def mode_enqueue():
         sys.exit(2)
     if action == "clear":
         q_clear(session_id)
-        sys.stderr.write("🧹 已清空本会话队列\n")
+        sys.stderr.write("🧹 Queue cleared (this session)\n")
         sys.exit(2)
 
     # action == "add"
@@ -242,7 +242,7 @@ def mode_enqueue():
         pending = len(_pending(session_id))
         _log(session_id, f"enqueue(queue) -> BLOCKED (busy) arg={arg[:40]!r}")
         sys.stderr.write(
-            f"📝 已入队·等候区（前一条跑完后自动开始，当前 {pending} 条）："
+            f"📝 Queued (runs after the current turn, {pending} pending): "
             f"{_preview(arg, 40)}\n"
         )
         sys.exit(2)  # block: do NOT interrupt the running turn
@@ -270,10 +270,10 @@ def mode_deliver():
     # /queue during it also waits.
     _set_busy(session_id)
     remaining = len(_pending(session_id))
-    tail = f"还剩 {remaining} 条" if remaining else "队列已空"
+    tail = f"{remaining} left" if remaining else "queue empty"
     _log(session_id, f"deliver -> POP busy=set remaining={remaining}")
     sys.stderr.write(
-        f"🔔 queued message popped（{tail}）：{_preview(msg, 50)}\n"
+        f"🔔 queued message popped ({tail}): {_preview(msg, 50)}\n"
     )
     reason = msg
     sys.stdout.write(
@@ -295,19 +295,19 @@ def mode_add():
     if len(sys.argv) >= 4 and sys.argv[2] == "--session":
         sid = sys.argv[3]
     q_add(message, sid)
-    where = "本会话" if sid else "全局(_global，不会自动投递)"
+    where = "this session" if sid else "_global (won't auto-drain)"
     pending = len(_pending(sid))
     sys.stdout.write(
-        f"📝 已入队 → {where}（当前 {pending} 条）：{_preview(message, 40)}\n"
+        f"📝 Queued -> {where} ({pending} pending): {_preview(message, 40)}\n"
     )
 
 
 def mode_list():
     files = _pending_all()
     if not files:
-        print("（队列为空）")
+        print("(queue empty)")
         return
-    print(f"队列（{len(files)} 条，跨所有会话）：")
+    print(f"Queue ({len(files)} items, across all sessions):")
     for idx, path in enumerate(files, 1):
         sess = os.path.basename(os.path.dirname(path))[:8]
         try:
@@ -326,7 +326,7 @@ def mode_clear():
         except OSError:
             pass
     q_clear("")
-    print("🧹 已清空所有会话的队列（及忙标记）")
+    print("🧹 Cleared all sessions' queues (and busy markers)")
 
 
 def mode_count():
@@ -336,9 +336,9 @@ def mode_count():
 def _emit_queue(session_id):
     files = _pending(session_id)
     if not files:
-        sys.stderr.write("（本会话队列为空）\n")
+        sys.stderr.write("(this session's queue is empty)\n")
         return
-    sys.stderr.write(f"本会话队列（{len(files)} 条）：\n")
+    sys.stderr.write(f"This session's queue ({len(files)} items):\n")
     for idx, path in enumerate(files, 1):
         try:
             with open(path, "r", encoding="utf-8") as fh:

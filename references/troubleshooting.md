@@ -2,8 +2,8 @@
 
 ## A queued message never ran
 
-Symptom: you typed `/queue X` while Claude seemed busy, saw `📝 已入队·等候区`,
-but `X` never started.
+Symptom: you typed `/queue X` while Claude seemed busy, saw
+`📝 Queued (runs after the current turn, …)`, but `X` never started.
 
 Cause: the hook thought Claude was busy when it was actually idle (so the
 blocked message had no turn to drain it). This was a bug in earlier versions

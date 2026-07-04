@@ -55,4 +55,4 @@ PY
 
 echo
 echo "✓ Done. Restart Claude Code (or start a new session) so the hooks load."
-echo "  Usage:  /queue 请帮我...   (while Claude is busy OR idle)"
+echo "  Usage:  /queue refactor the auth module   (while Claude is busy OR idle)"

@@ -31,8 +31,8 @@ Then restart Claude Code so the hooks load. Prefer to wire it yourself? Merge
 
 | You type | What happens |
 |---|---|
-| `/queue 请帮我…` (busy) | Stored silently; runs after the current turn. |
-| `/queue 请帮我…` (idle) | Handled immediately, like a normal prompt. |
+| `/queue refactor the auth module` (busy) | Stored silently; runs after the current turn. |
+| `/queue refactor the auth module` (idle) | Handled immediately, like a normal prompt. |
 | `/queue` | Show this session's queue. |
 | `/queue clear` | Empty this session's queue. |
 
