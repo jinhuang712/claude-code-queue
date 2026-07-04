@@ -221,6 +221,13 @@ def _dec_native(session_id):
     return n
 
 
+def _clear_native(session_id):
+    try:
+        os.remove(_native_path(session_id))
+    except OSError:
+        pass
+
+
 # --------------------------------------------------------------------------- #
 # /queue prompt parsing
 # --------------------------------------------------------------------------- #
@@ -258,8 +265,10 @@ def mode_enqueue():
     if parsed is None:
         # A real (non-/queue) prompt. If Claude is busy it goes to Claude Code's
         # native queue — remember it so the Stop hook yields to it (real prompts
-        # preempt our deferred queue). Either way, mark busy.
-        if _is_busy(session_id):
+        # preempt our deferred queue). Only track when our queue actually has
+        # something to preempt (otherwise we'd accumulate a stale counter that,
+        # if interrupted, never decrements and later blocks drainage).
+        if _is_busy(session_id) and _pending(session_id):
             _inc_native(session_id)
         _set_busy(session_id)
         _log(session_id, f"enqueue(non-queue) busy=set prompt={prompt[:50]!r}")
@@ -300,22 +309,24 @@ def mode_deliver():
     data = _read_stdin_json()
     session_id = data.get("session_id", "")
 
+    # Nothing queued → this session is idle. Clear the marker AND any stale
+    # native counter (an interrupt can leave .native set with no Stop to
+    # decrement it; without this reset it would block future drainage).
+    if not _pending(session_id):
+        _clear_busy(session_id)
+        _clear_native(session_id)
+        _log(session_id, "deliver -> idle (queue empty), markers cleared")
+        sys.exit(0)
+
     # A real (non-/queue) prompt is waiting in Claude Code's native queue —
-    # yield so Claude delivers IT next, instead of letting our deferred items
-    # cut in front of the user's actual request.
+    # yield so Claude delivers IT before our deferred items.
     if _native_pending(session_id) > 0:
         _dec_native(session_id)
         _log(session_id, "deliver -> YIELD to native prompt")
         sys.exit(0)
 
+    # Drain our queue (FIFO).
     msg = q_pop(session_id)
-    if not msg:
-        _clear_busy(session_id)  # nothing queued → this session is now idle
-        _log(session_id, "deliver -> idle (queue empty), busy=cleared")
-        sys.exit(0)
-
-    # A queued item is starting its own turn → mark busy again so a further
-    # /queue during it also waits.
     _set_busy(session_id)
     remaining = len(_pending(session_id))
     tail = f"{remaining} left" if remaining else "queue empty"
@@ -323,9 +334,8 @@ def mode_deliver():
     sys.stderr.write(
         f"🔔 queued message popped ({tail}): {_preview(msg, 50)}\n"
     )
-    reason = msg
     sys.stdout.write(
-        json.dumps({"decision": "block", "reason": reason}, ensure_ascii=False)
+        json.dumps({"decision": "block", "reason": msg}, ensure_ascii=False)
     )
     sys.exit(0)
 

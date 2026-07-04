@@ -141,13 +141,28 @@ def test_stale_busy_status_without_marker(tmp_path):
 
 
 # -- normal prompts preempt the queue -------------------------------------- #
-def test_normal_prompt_while_busy_increments_native_pending(tmp_path):
-    """A non-/queue prompt submitted while busy goes to Claude Code's native
-    queue. We must remember it exists so the Stop hook can yield to it."""
+def test_native_pending_only_tracked_when_queue_nonempty(tmp_path):
+    """We only preempt when our queue has something to defer; tracking native
+    prompts otherwise would let interrupts leave a stale counter that blocks
+    future drainage."""
     env = make_env(tmp_path, {"s1": "busy"})
-    enqueue("working", "s1", env)            # sets marker
-    enqueue("a real prompt", "s1", env)      # non-/queue, busy -> native pending
+    enqueue("working", "s1", env)            # marker set, queue empty
+    enqueue("a real prompt", "s1", env)      # queue empty → NOT tracked
+    assert not (tmp_path / "queue" / "s1" / ".native").exists()
+    enqueue("/queue deferred", "s1", env)    # queue now non-empty
+    enqueue("real prompt 2", "s1", env)      # → tracked
     assert (tmp_path / "queue" / "s1" / ".native").read_text() == "1"
+
+
+def test_stale_native_counter_resets_when_idle(tmp_path):
+    """An interrupt can leave .native positive. Once the queue empties (idle),
+    the next Stop must clear it so it can't block future drainage."""
+    env = make_env(tmp_path, {"s1": "busy"})
+    enqueue("working", "s1", env)
+    (tmp_path / "queue" / "s1" / ".native").write_text("2")  # simulate stale
+    rc, out, err = deliver("s1", env)        # queue empty → idle
+    assert rc == 0 and out == ""
+    assert not (tmp_path / "queue" / "s1" / ".native").exists()
 
 
 def test_stop_yields_to_native_prompt_before_draining(tmp_path):
