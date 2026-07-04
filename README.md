@@ -48,8 +48,8 @@ token windows by feeding prompts to headless `claude -p`).
 ## Install
 
 ```bash
-git clone <this-repo> ~/dev/claude-code-queue
-cd ~/dev/claude-code-queue
+git clone <this-repo> ~/dev/skills/claude-code-queue
+cd ~/dev/skills/claude-code-queue
 ./install.sh
 ```
 
