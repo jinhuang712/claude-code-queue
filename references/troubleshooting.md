@@ -12,8 +12,9 @@ that trusted a single signal; the current marker-AND-status check (see
 
 Fix:
 ```bash
-python3 ~/.claude/hooks/queue-hook.py list     # see what's stuck
-python3 ~/.claude/hooks/queue-hook.py clear    # drop stale items
+Q=$(find ~/.claude -name queue-hook.py 2>/dev/null | head -1)
+python3 "$Q" list     # see what's stuck
+python3 "$Q" clear    # drop stale items
 ```
 Then just send any normal prompt — the `Stop` hook drains the queue at turn end.
 
@@ -33,11 +34,13 @@ run `/queue clear` or send a normal prompt to reset.
 
 ## Hooks aren't firing at all
 
-- Confirm the entries are in `~/.claude/settings.json` under
-  `hooks.UserPromptSubmit` and `hooks.Stop` (run `scripts/install.sh` or merge
-  `hooks/settings.example.json`).
-- Hooks load at session start — **restart Claude Code** after install.
-- Check the hook file exists at the path settings points to.
+- Confirm the plugin is enabled: `/plugin` inside Claude Code should list
+  `claude-code-queue`. The plugin system auto-registers `hooks/hooks.json` —
+  there's nothing to add to `~/.claude/settings.json` by hand.
+- Hooks load at session start — **restart Claude Code** (or `/reload-plugins`)
+  after install or update.
+- `find ~/.claude -name queue-hook.py` to confirm the file actually landed on
+  disk, and that you're pointing the commands below at that path.
 
 ## Debug logging
 
@@ -50,8 +53,9 @@ the event, session id, status, and decision.
 ## Manual operations
 
 ```bash
-python3 ~/.claude/hooks/queue-hook.py list      # all sessions' pending items
-python3 ~/.claude/hooks/queue-hook.py count     # total pending
-python3 ~/.claude/hooks/queue-hook.py clear     # empty everything (all sessions)
-python3 ~/.claude/hooks/queue-hook.py add "…"   # enqueue to _global (won't auto-drain)
+Q=$(find ~/.claude -name queue-hook.py 2>/dev/null | head -1)
+python3 "$Q" list      # all sessions' pending items
+python3 "$Q" count     # total pending
+python3 "$Q" clear     # empty everything (all sessions)
+python3 "$Q" add "…"   # enqueue to _global (won't auto-drain)
 ```

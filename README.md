@@ -51,7 +51,8 @@ git clone https://github.com/jinhuang712/claude-code-queue ~/.claude/skills/clau
 | `/queue` | Show this session's queue. |
 | `/queue clear` | Empty this session's queue. |
 
-Shell access: `python3 ~/.claude/hooks/queue-hook.py list \| count \| clear \| add "…"`.
+Shell access: locate the installed hook with `find ~/.claude -name queue-hook.py`,
+then run it directly: `list \| count \| clear \| add "…"`.
 
 ## Examples
 
@@ -99,10 +100,11 @@ actually fix this blocking bug first      # real prompt — runs first
 
 ```bash
 # shell CLI (works outside Claude Code too)
-python3 ~/.claude/hooks/queue-hook.py list       # all sessions' pending items
-python3 ~/.claude/hooks/queue-hook.py count      # total pending
-python3 ~/.claude/hooks/queue-hook.py clear      # empty everything (all sessions)
-python3 ~/.claude/hooks/queue-hook.py add "…"    # enqueue to _global (won't auto-drain)
+Q=$(find ~/.claude -name queue-hook.py 2>/dev/null | head -1)
+python3 "$Q" list       # all sessions' pending items
+python3 "$Q" count      # total pending
+python3 "$Q" clear      # empty everything (all sessions)
+python3 "$Q" add "…"    # enqueue to _global (won't auto-drain)
 ```
 
 ## Core Files

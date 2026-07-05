@@ -12,7 +12,7 @@ through pure-thinking phases where `status` may not read exactly "busy";
 requiring `!= "idle"` (rather than `== "busy"`) still catches interrupts (Esc
 flips status to idle, fires no Stop). See references/how-it-works.md.
 
-Wiring (see README / install.sh):
+Wiring (declared in hooks/hooks.json, auto-registered by the plugin system):
   UserPromptSubmit hook -> `queue-hook.py enqueue`
   Stop hook             -> `queue-hook.py deliver`
 
