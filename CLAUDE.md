@@ -18,6 +18,8 @@ adds a prompt queue. `CLAUDE.md` is the entry point for anyone
 - `SKILL.md` — the skill definition Claude loads (frontmatter + behavior).
 - `references/` — design + troubleshooting deep dives.
 - `tests/test_queue_hook.py` — exercises the hook via subprocess.
+- `assets/` — bilingual GitHub Pages landing pages (EN/ZH); unrelated to the
+  plugin mechanism, just served straight from this repo's root via Pages.
 
 ## Install model
 
@@ -28,15 +30,24 @@ Users install with `/plugin marketplace add` + `/plugin install`.
 
 ## The core contract (don't break these)
 
-1. **Per-session queue**: storage is `~/.claude/queue/<session_id>/*.msg`. The
-   Stop hook only ever pops the *current* session — never another session's
-   items (that was the original cross-session-theft bug).
-2. **Busy = `status == "busy"` AND marker set.** Neither signal alone is enough;
-   see `references/how-it-works.md`. Don't simplify to one signal.
-3. **Idle `/queue` is not enqueued** — it's handled immediately as a normal
-   turn (no ack/pop round-trip). Enqueueing + popping only happens when busy.
-4. **Interrupt must not dead-end**: relying on `status` flipping to idle on Esc
-   is what makes this survive interrupts. Don't go back to marker-only.
+`references/how-it-works.md` is the single source of truth for *how* busy
+detection, idle-handling, and native-prompt preemption are implemented — don't
+restate that mechanism here or in `SKILL.md`, link to it instead. (The exact
+formula drifted out of sync with the code more than once from being duplicated
+across docs.) What must stay true, regardless of implementation:
+
+1. **Per-session isolation**: the Stop hook only ever pops the *current*
+   session's queue — never another session's (the original cross-session-theft
+   bug).
+2. **Busy detection uses two independent signals, not one** — each has a blind
+   spot alone; see the reference doc for which, and why.
+3. **Idle `/queue` is handled immediately**, not enqueued — no ack/pop
+   round-trip when there's nothing to wait behind.
+4. **An interrupt (Esc) must not dead-end a future `/queue`** — busy detection
+   must self-heal afterward, not require a manual `/queue clear`.
+
+Changing the *mechanism* behind any of these is fine; changing the *guarantee*
+is a breaking change — update the reference doc and its tests together.
 
 ## Working on the hook
 
