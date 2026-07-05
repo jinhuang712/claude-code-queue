@@ -10,20 +10,41 @@ storage. Read the "History" section before adding any.
   user-invoked only) + the instruction body delivered with each queued request.
   Installed at `~/.claude/skills/queue/`, the **directory name** is what
   registers `/queue`.
-- `assets/` — GitHub Pages landing pages (EN/ZH); not part of the mechanism.
+- `install.sh` — the `curl … | bash` installer. Fetches only `SKILL.md` from
+  raw master into `~/.claude/skills/queue/`; idempotent (re-run = update).
+- `index.html` + `.nojekyll` + `assets/` — GitHub Pages: `.nojekyll` disables
+  Jekyll so `install.sh` is served raw at
+  `jinhuang712.github.io/claude-code-queue/install.sh`; `assets/` are the EN/ZH
+  landing pages. None of this is part of the mechanism.
 
 ## Ships as a standalone skill, NOT a plugin
 
-Install is `git clone … ~/.claude/skills/queue`. There is intentionally no
-`.claude-plugin/` manifest and no marketplace. Reason (verified against the
-docs + a live install, July 2026): **Claude Code always namespaces a plugin's
-commands as `/plugin-name:command`.** A marketplace install of this as a plugin
-named `queue` produced `/queue:queue`; a throwaway `commands/qtest.md` probe
-inside the plugin registered as `/queue:qtest` — confirming even plugin
-`commands/` files are namespaced. A bare `/queue` (the whole point) only comes
-from a standalone skill under `~/.claude/skills/`. Adding a `.claude-plugin/`
-back would turn a skills-dir clone into a namespaced `@skills-dir` plugin and
-break the bare command — so don't.
+Install is the `curl … | bash` one-liner in `install.sh` (drops `SKILL.md` into
+`~/.claude/skills/queue/`). There is intentionally no `.claude-plugin/` manifest
+and no marketplace. Reason (verified against the docs + a live install, July
+2026): **Claude Code always namespaces a plugin's command as
+`/plugin-name:command`, and nothing removes the prefix.** Evidence, strongest
+first:
+
+- The *cleanest possible* plugin — a single `SKILL.md` at the plugin root,
+  `name: queue` in frontmatter, `name: "queue"` in `plugin.json`, **no**
+  `skills/` or `commands/` dir (cache commit `b8525fb58468`) — loaded in a
+  live v2.1.201 session as `plugin:queue:queue`. So the single-skill-at-root
+  layout does **not** buy a bare command.
+- The plugins reference says a root `SKILL.md`'s frontmatter `name` sets the
+  "invocation name" — but that only controls the segment *after* the colon
+  (without it, a marketplace install falls back to the version-hash dir name).
+  It never drops the `queue:` namespace.
+- Earlier probes agreed: a `commands/qtest.md` inside the plugin registered as
+  `/queue:qtest`.
+
+A bare `/queue` (the whole point) only comes from a **standalone skill** under
+`~/.claude/skills/` with **no** `.claude-plugin/`. Adding a `.claude-plugin/`
+back — even for the "elegant" `/plugin install` flow — turns it into a
+namespaced plugin and breaks the bare command. The trade-off was put to the
+user directly (bare `/queue` vs `/plugin`-install elegance); they chose the bare
+command, so we ship a standalone skill with a curl installer. Don't re-add a
+manifest.
 
 ## History — why there is no code
 

@@ -25,20 +25,31 @@ clarifying questions; note assumptions; end with a one-line summary).
 
 ## Install
 
-Clone into your skills directory — the folder name **must** be `queue`, because
-that's what becomes the command:
-
 ```bash
-git clone https://github.com/jinhuang712/claude-code-queue ~/.claude/skills/queue
+curl -fsSL https://jinhuang712.github.io/claude-code-queue/install.sh | bash
 ```
 
-Restart Claude Code (skills load at session start). You now have a bare `/queue`.
+That drops one file — `SKILL.md` — into `~/.claude/skills/queue/`. The folder
+name (`queue`) is what registers the command. Restart Claude Code (skills load
+at session start) and you have a bare `/queue`. Re-run to update; to remove,
+`rm -rf ~/.claude/skills/queue`.
 
-> **Why not a plugin / marketplace?** Claude Code *always* namespaces a plugin's
-> commands as `/plugin-name:command` — a marketplace install would give you
-> `/queue:queue`, not `/queue`. A bare `/queue` only comes from a standalone
-> skill under `~/.claude/skills/`, so that's how this ships. (Verified against
-> the docs and a live install.)
+> **Why a standalone skill and not a plugin / marketplace?** Because a bare
+> `/queue` is the whole point, and a plugin can't give you one. Claude Code
+> *always* namespaces a plugin's command as `/plugin-name:command` — even the
+> cleanest single-`SKILL.md`-at-root plugin registers as `/queue:queue`
+> (verified live against Claude Code v2.1.201 and the plugins reference). The
+> frontmatter `name` field only controls the part after the colon; it can't
+> drop the prefix. A bare `/queue` only comes from a standalone skill under
+> `~/.claude/skills/`, so that's how this ships.
+
+Prefer not to pipe `curl` into `bash`? Do it by hand — it's one file:
+
+```bash
+mkdir -p ~/.claude/skills/queue
+curl -fsSL https://raw.githubusercontent.com/jinhuang712/claude-code-queue/master/SKILL.md \
+  -o ~/.claude/skills/queue/SKILL.md
+```
 
 Then:
 
