@@ -345,7 +345,7 @@ def mode_deliver():
 def mode_add():
     """Manual add (testing). Without a session id it lands in _global."""
     if len(sys.argv) >= 3:
-        message = " ".join(sys.argv[3:]) if sys.argv[2] == "--session" else " ".join(sys.argv[2:])
+        message = " ".join(sys.argv[4:]) if sys.argv[2] == "--session" else " ".join(sys.argv[2:])
     else:
         message = sys.stdin.read()
     sid = ""

@@ -194,3 +194,14 @@ def test_stop_yields_to_native_prompt_before_draining(tmp_path):
     rc, out, err = deliver("s1", env)
     assert json.loads(out)["reason"] == "deferred"
 
+
+# -- CLI: manual `add --session` -------------------------------------------- #
+def test_add_with_session_flag_does_not_leak_session_id_into_message(tmp_path):
+    """`add --session sid hello world` must queue "hello world", not
+    "sid hello world" — the session id is a separate argv token, not part of
+    the message."""
+    env = make_env(tmp_path, {})
+    rc, out, err = run("add", env=env, args=["--session", "sid", "hello", "world"])
+    assert rc == 0
+    assert msgs(tmp_path, "sid") == ["hello world"]
+
