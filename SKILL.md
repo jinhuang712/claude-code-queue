@@ -21,10 +21,11 @@ tool-call boundary.
 - A **normal (non-`/queue`) prompt** submitted while busy preempts the queue —
   real requests always run before deferred ones.
 
-Busy detection requires **both** `status == "busy"` **and** a self-maintained
-busy marker. Each signal alone has a blind spot — stale status right after a
-Stop, or a marker stuck after an interrupt (Esc) — so the AND closes both. Full
-rationale in `references/how-it-works.md`.
+Busy detection requires **both** a self-maintained busy marker **and** Claude
+Code's own session status reading anything other than idle. Each signal alone
+has a blind spot — a marker stuck after an interrupt (Esc), or a status that's
+stale or non-literally-"busy" mid-turn — so the AND closes both. Full rationale
+in `references/how-it-works.md`.
 
 ## When to suggest `/queue`
 

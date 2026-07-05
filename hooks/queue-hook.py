@@ -6,11 +6,11 @@ busy goes to a waiting area and does NOT interrupt the current turn. When the
 turn finishes, the oldest queued item is popped ("queued message popped") and
 auto-starts — in the SAME session.
 
-Busy detection = (Claude Code `status` == "busy") AND a self-maintained busy
-marker. Each signal alone has a blind spot (stale status after a Stop; marker
-stuck after an interrupt/Esc), so both must agree. A non-`/queue`
-UserPromptSubmit sets the marker; a Stop with an empty queue clears it. See
-references/how-it-works.md.
+Busy detection = a self-maintained busy marker AND `status != "idle"`. The
+marker (set on turn start, cleared on Stop) is the primary signal and stays set
+through pure-thinking phases where `status` may not read exactly "busy";
+requiring `!= "idle"` (rather than `== "busy"`) still catches interrupts (Esc
+flips status to idle, fires no Stop). See references/how-it-works.md.
 
 Wiring (see README / install.sh):
   UserPromptSubmit hook -> `queue-hook.py enqueue`
@@ -173,18 +173,16 @@ def _marker_set(session_id):
 
 
 def _is_busy(session_id):
-    """Both signals must agree a turn is active.
+    """A turn is active iff the marker is set AND status isn't idle.
 
-    - status == "busy": Claude Code knows when it's really working (covers
-      interrupts and pure generation, which fire no hooks).
-    - marker set: we set it on turn start / clear it on a normal Stop (covers
-      status staleness right after a Stop fires).
-
-    Either alone has a blind spot; the AND closes both. In particular:
-    interrupt leaves the marker stuck, but status flips to idle -> not busy;
-    a stale "busy" status after Stop is offset by the cleared marker.
+    The marker (set on turn start, cleared on Stop) is the primary signal: it
+    stays set through pure-thinking phases where Claude Code's `status` may not
+    read exactly "busy". Requiring `status != "idle"` (rather than `== "busy"`)
+    still catches interrupts — Esc flips status to idle and fires no Stop, so a
+    marker stuck after an interrupt reads as not-busy — while not breaking when
+    status reports some other non-idle value mid-turn.
     """
-    return _session_status(session_id) == "busy" and _marker_set(session_id)
+    return _marker_set(session_id) and _session_status(session_id) != "idle"
 
 
 # --------------------------------------------------------------------------- #
@@ -285,6 +283,7 @@ def mode_enqueue():
         sys.exit(2)
 
     # action == "add"
+    _log(session_id, f"enqueue(queue) DECIDE status={_session_status(session_id)!r} marker={_marker_set(session_id)} native={_native_pending(session_id)} sid={session_id[:8]} arg={arg[:40]!r}")
     if _is_busy(session_id):
         # busy → waiting area (zero interruption); Stop pops it when the turn ends
         q_add(arg, session_id)

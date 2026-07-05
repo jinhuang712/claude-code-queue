@@ -18,24 +18,32 @@ FIFO by filename) plus a `.busy` marker file.
 
 ## Why busy detection needs BOTH signals
 
-`busy = (status == "busy") AND (marker set)`. Neither signal alone is reliable.
-
-**The status field can be stale.** Right after a normal `Stop`, Claude Code's
-per-session `status` (`~/.claude/sessions/<pid>.json`) may still read `"busy"`
-for a moment. If we trusted it alone, a `/queue` typed in that window would be
-blocked while actually idle → **dead message** (no turn running to drain it).
+`busy = (marker set) AND (status != "idle")`. Neither signal alone is reliable.
 
 **The marker can get stuck.** The marker is set on turn start
 (`UserPromptSubmit`, non-`/queue`) and cleared on a normal `Stop`. But an
 **interrupt (Esc) fires no `Stop`**, so the marker stays set. If we trusted it
 alone, every `/queue` after an interrupt would be blocked forever → dead message.
 
-**The AND closes both:**
+**The status field can be stale, or simply not the literal string `"busy"`.**
+Right after a normal `Stop`, Claude Code's per-session `status`
+(`~/.claude/sessions/<pid>.json`) may still read `"busy"` for a moment — the
+cleared marker offsets that. Mid-turn, in pure-thinking phases, `status` can
+read something other than `"busy"` (e.g. `"thinking"`) while a turn is still
+genuinely running. Checking `status == "busy"` literally would treat that as
+idle and let a `/queue` sent during that phase take the *idle* path — handled
+immediately, interrupting the running turn, exactly what this skill exists to
+prevent. Checking `status != "idle"` instead still counts that as busy.
+
+**The AND closes all three:**
 - *Interrupt*: marker stuck, but `status` flips to `idle` → not busy → `/queue`
   allowed. ✅
-- *Stale status after Stop*: `status` reads busy, but marker cleared → not busy
-  → allowed. ✅
-- *Genuinely working*: both set → busy → block (zero interruption). ✅
+- *Stale "busy" status right after Stop*: marker already cleared by that Stop
+  → not busy → allowed. ✅
+- *Mid-turn non-"busy" status (e.g. "thinking")*: marker still set, status
+  merely non-idle → busy → blocked. ✅
+- *Genuinely working*: both set, status non-idle → busy → block (zero
+  interruption). ✅
 
 A marker older than 1 hour is treated as stale (crashed/abandoned turn).
 

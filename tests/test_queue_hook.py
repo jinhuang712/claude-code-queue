@@ -140,6 +140,17 @@ def test_stale_busy_status_without_marker(tmp_path):
     assert rc == 0
 
 
+def test_busy_when_status_is_non_idle_non_busy(tmp_path):
+    """During pure-thinking phases Claude Code may report a status that isn't
+    literally 'busy' (e.g. 'thinking'). With the marker set, that's still busy
+    — /queue must block, not leak through to Claude Code's native queue."""
+    env = make_env(tmp_path, {"s1": "thinking"})  # non-idle, non-busy
+    enqueue("working", "s1", env)                 # sets marker
+    rc, out, err = enqueue("/queue X", "s1", env)
+    assert rc == 2                                # blocked
+    assert msgs(tmp_path, "s1") == ["X"]
+
+
 # -- normal prompts preempt the queue -------------------------------------- #
 def test_native_pending_only_tracked_when_queue_nonempty(tmp_path):
     """We only preempt when our queue has something to defer; tracking native

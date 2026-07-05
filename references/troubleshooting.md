@@ -7,7 +7,7 @@ Symptom: you typed `/queue X` while Claude seemed busy, saw
 
 Cause: the hook thought Claude was busy when it was actually idle (so the
 blocked message had no turn to drain it). This was a bug in earlier versions
-that trusted a single signal; the current `status AND marker` check (see
+that trusted a single signal; the current marker-AND-status check (see
 [how-it-works.md](how-it-works.md)) should prevent it.
 
 Fix:
@@ -27,7 +27,7 @@ own items.
 ## `/queue` after an interrupt (Esc) gets stuck
 
 If interrupting a turn leaves the session unable to accept `/queue` normally:
-this was the "marker stuck" bug, fixed by also requiring `status == "busy"`. If
+this was the "marker stuck" bug, fixed by also requiring `status != "idle"`. If
 you still see it, the Claude Code version may not flip `status` to idle on Esc —
 run `/queue clear` or send a normal prompt to reset.
 
