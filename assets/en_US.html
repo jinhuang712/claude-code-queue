@@ -103,18 +103,26 @@
       <p class="lead">A prompt queue for Claude Code. Type <code>/queue …</code> while Claude is busy and the message waits — it runs <strong>after</strong> the current turn, instead of being injected at the next tool-call boundary.</p>
       <div class="quick">
         <h3>Install</h3>
-<pre><span class="prompt">$</span> curl -fsSL https://jinhuang712.github.io/claude-code-queue/install.sh | bash
+<pre><span class="prompt">$</span> curl -fsSL \
+  https://jinhuang712.github.io/claude-code-queue/install.sh \
+  | bash
 <span class="dim"># restart Claude Code — you now have a bare /queue</span></pre>
       </div>
     </div>
     <div class="term" aria-label="terminal demo">
       <div class="bar"><i></i><i></i><i></i></div>
       <div class="body">
-        <div><span class="prompt">/queue</span> then run the tests and fix failures</div>
-        <div class="out">… Claude keeps working, uninterrupted …</div>
-        <div class="out">… turn ends …</div>
-        <div class="amber">/queue then run the tests and fix failures</div>
-        <div class="green">✓ auto-started</div>
+        <div>✻ <span class="out">Working… refactoring the auth module</span></div>
+        <div>⏺ Edit <span class="out">src/auth/session.ts</span></div>
+        <div>⏺ Bash <span class="out">npm run typecheck</span> · <span class="green">ok</span></div>
+        <div><span class="prompt">&gt;</span> <span class="amber">/queue</span> then run the tests and fix failures</div>
+        <div class="out">↑ queued — the running turn is left untouched</div>
+        <div>⏺ Write <span class="out">src/auth/session.ts</span> · <span class="green">done</span></div>
+        <div class="green">✓ auth module refactored</div>
+        <div class="out">─── turn ends · the queued request starts ───</div>
+        <div><span class="prompt">&gt;</span> <span class="amber">/queue</span> then run the tests and fix failures</div>
+        <div>⏺ Bash <span class="out">npm test</span> · <span class="green">128 passed</span></div>
+        <div class="green">✓ all green — nothing to fix</div>
         <div><span class="cursor"></span></div>
       </div>
     </div>

@@ -102,18 +102,26 @@
       <p class="lead">Claude Code 的消息队列。忙时输入 <code>/queue …</code>，消息会先等候——<strong>本轮跑完后</strong>才执行，而不是在下一个 tool-call 边界被插进去。</p>
       <div class="quick">
         <h3>安装</h3>
-<pre><span class="prompt">$</span> curl -fsSL https://jinhuang712.github.io/claude-code-queue/install.sh | bash
+<pre><span class="prompt">$</span> curl -fsSL \
+  https://jinhuang712.github.io/claude-code-queue/install.sh \
+  | bash
 <span class="dim"># 重启 Claude Code — 就有了裸 /queue</span></pre>
       </div>
     </div>
     <div class="term" aria-label="terminal demo">
       <div class="bar"><i></i><i></i><i></i></div>
       <div class="body">
-        <div><span class="prompt">/queue</span> then run the tests and fix failures</div>
-        <div class="out">… Claude 继续干活，不受打扰 …</div>
-        <div class="out">… 本轮结束 …</div>
-        <div class="amber">/queue then run the tests and fix failures</div>
-        <div class="green">✓ auto-started</div>
+        <div>✻ <span class="out">工作中… 正在重构 auth 模块</span></div>
+        <div>⏺ Edit <span class="out">src/auth/session.ts</span></div>
+        <div>⏺ Bash <span class="out">npm run typecheck</span> · <span class="green">ok</span></div>
+        <div><span class="prompt">&gt;</span> <span class="amber">/queue</span> 跑一遍测试，有失败就修掉</div>
+        <div class="out">↑ 已排队 — 当前这一轮不受打扰</div>
+        <div>⏺ Write <span class="out">src/auth/session.ts</span> · <span class="green">done</span></div>
+        <div class="green">✓ auth 模块重构完成</div>
+        <div class="out">─── 本轮结束 · 排队的请求开始 ───</div>
+        <div><span class="prompt">&gt;</span> <span class="amber">/queue</span> 跑一遍测试，有失败就修掉</div>
+        <div>⏺ Bash <span class="out">npm test</span> · <span class="green">128 passed</span></div>
+        <div class="green">✓ 全绿 — 无需修改</div>
         <div><span class="cursor"></span></div>
       </div>
     </div>
