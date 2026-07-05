@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>claude-code-queue — Claude Code 的排队工具</title>
-<meta name="description" content="Claude Code 的 /queue：把请求延后到当前轮结束后执行。一条 slash command——排队由原生调度器完成。">
-<link rel="canonical" href="https://jinhuang712.github.io/claude-code-queue/cn_ZH.html">
+<title>claude-code-queue — a queue for Claude Code</title>
+<meta name="description" content="/queue for Claude Code: defer a request until the current turn ends. A single slash command — the native scheduler does the queueing.">
+<link rel="canonical" href="https://jinhuang712.github.io/claude-code-queue/en_US.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -18,7 +18,7 @@
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
-  body{background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',system-ui,'PingFang SC','Microsoft YaHei',sans-serif;line-height:1.7;-webkit-font-smoothing:antialiased}
+  body{background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased}
   .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
   a{color:inherit}
   a:focus-visible{outline:2px solid var(--amber);outline-offset:2px;border-radius:3px}
@@ -33,9 +33,9 @@
   .hero{padding:84px 0 60px;border-bottom:1px solid var(--rule)}
   .hero .grid{display:grid;grid-template-columns:1fr;gap:40px}
   @media(min-width:900px){.hero .grid{grid-template-columns:1.05fr .95fr;align-items:center;gap:48px}}
-  .hero h1{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:clamp(38px,7.5vw,68px);line-height:1.05;letter-spacing:-.02em;margin:0 0 22px}
+  .hero h1{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:clamp(40px,8vw,74px);line-height:1.02;letter-spacing:-.035em;margin:0 0 22px}
   .hero h1 .q{color:var(--amber)}
-  .hero .lead{font-size:clamp(16px,2.1vw,20px);color:var(--ink-2);max-width:44ch;margin:0 0 30px}
+  .hero .lead{font-size:clamp(17px,2.2vw,21px);color:var(--ink-2);max-width:42ch;margin:0 0 30px}
   .hero .lead strong{color:var(--ink)}
   code,pre{font-family:'IBM Plex Mono',monospace}
   :not(pre)>code{background:var(--paper-2);padding:2px 6px;border-radius:4px;font-size:.9em;border:1px solid var(--rule)}
@@ -47,6 +47,7 @@
   .quick{margin-top:8px}
   .quick h3{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);margin:0 0 10px;font-weight:500}
 
+  /* the signature terminal */
   .term{background:var(--term-bg);border-radius:12px;overflow:hidden;box-shadow:0 30px 60px -28px rgba(28,20,10,.45);font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.75}
   .term .bar{display:flex;gap:7px;padding:12px 14px;background:#0E0E12}
   .term .bar i{width:11px;height:11px;border-radius:50%;display:inline-block}
@@ -63,8 +64,8 @@
 
   section{padding:68px 0;border-bottom:1px solid var(--rule)}
   .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--amber);margin:0 0 12px}
-  section h2{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:clamp(22px,3.4vw,29px);letter-spacing:-.01em;margin:0 0 14px}
-  section p.kicker{color:var(--ink-2);max-width:68ch;margin:0;font-size:16px}
+  section h2{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:clamp(23px,3.6vw,31px);letter-spacing:-.02em;margin:0 0 14px}
+  section p.kicker{color:var(--ink-2);max-width:68ch;margin:0;font-size:17px}
 
   .behaviors{margin-top:30px}
   .behavior{display:grid;grid-template-columns:40px 1fr;gap:18px;padding:22px 0;border-top:1px solid var(--rule);align-items:start}
@@ -73,7 +74,7 @@
   .marker .d{width:11px;height:11px;border-radius:50%}
   .d-run{background:var(--green)}
   .d-wait{background:transparent;box-shadow:inset 0 0 0 2px var(--amber)}
-  .behavior h3{margin:0 0 4px;font-size:16px;font-weight:600}
+  .behavior h3{margin:0 0 4px;font-size:17px;font-weight:600}
   .behavior p{margin:0;color:var(--ink-2);max-width:60ch}
 
   .example{margin:30px 0}
@@ -129,29 +130,29 @@
 <header class="top">
   <div class="wrap row">
     <div class="brand">claude-code<span class="dot">·</span>queue</div>
-    <a class="lang" href="en_US.html" hreflang="en">English</a>
+    <a class="lang" href="cn_ZH.html" hreflang="zh">中文</a>
   </div>
 </header>
 
 <section class="hero">
   <div class="wrap grid">
     <div>
-      <h1>排队<span class="q">，</span>不插队。</h1>
-      <p class="lead">Claude Code 的消息队列。忙时输入 <code>/queue …</code>，消息会先等候——<strong>本轮跑完后</strong>才执行，而不是在下一个 tool-call 边界被插进去。</p>
+      <h1>queue<span class="q">,</span> not interrupt.</h1>
+      <p class="lead">A prompt queue for Claude Code. Type <code>/queue …</code> while Claude is busy and the message waits — it runs <strong>after</strong> the current turn, instead of being injected at the next tool-call boundary.</p>
       <div class="quick">
-        <h3>安装</h3>
+        <h3>Install</h3>
 <pre><span class="prompt">$</span> curl -fsSL \
   https://jinhuang712.github.io/claude-code-queue/install.sh \
   | bash
-<span class="dim"># 重启 Claude Code — 就有了裸 /queue</span></pre>
+<span class="dim"># restart Claude Code — you now have a bare /queue</span></pre>
       </div>
     </div>
     <div class="cc" data-anim role="img"
-         aria-label="Claude Code 会话动画：Claude 忙时用 /queue 排入一个后续请求，本轮结束后自动执行。"
-         data-p1="重构 auth 模块"
-         data-p2="跑一遍测试，有失败就修掉"
-         data-ok1="auth 模块重构完成"
-         data-ok2="128 passed — 全绿">
+         aria-label="Animated Claude Code session: a follow-up is queued with /queue while Claude is mid-turn, and it auto-runs once the turn ends."
+         data-p1="refactor the auth module"
+         data-p2="then run the tests and fix any failures"
+         data-ok1="auth module refactored"
+         data-ok2="128 passed — all green">
       <div class="cc-bar"><i></i><i></i><i></i><span class="cc-title">claude-code</span></div>
       <div class="cc-scr"></div>
     </div>
@@ -160,32 +161,32 @@
 
 <section>
   <div class="wrap">
-    <p class="eyebrow">为什么</p>
-    <h2>按回车，不该把当前任务带偏。</h2>
-    <p class="kicker">Claude Code 忙时你发的<strong>普通消息</strong>会在下一个 tool-call 边界被插进去——它会打断、带偏正在跑的任务。但对<em>已注册的 slash command</em>，Claude Code 原生就会等到整轮结束才投递。claude-code-queue 做的只是把 <code>/queue</code> 注册成一条命令：排队由原生调度器完成，命令正文则让 Claude 在你离开时也能把延后的请求稳妥跑完。</p>
+    <p class="eyebrow">Why</p>
+    <h2>Pressing Enter mid-turn shouldn't derail the turn.</h2>
+    <p class="kicker">A plain message sent while Claude Code is mid-turn is injected at the next tool-call boundary — it interrupts and redirects the running task. But Claude Code holds a <em>recognized slash command</em> until the whole turn ends. claude-code-queue simply registers <code>/queue</code> as one: the native scheduler does the queueing, and the command body tells Claude to run the deferred request unattended.</p>
   </div>
 </section>
 
 <section>
   <div class="wrap">
-    <p class="eyebrow">行为</p>
-    <h2>排队的消息会怎么处理</h2>
+    <p class="eyebrow">Behavior</p>
+    <h2>How a queued message is treated</h2>
     <div class="behaviors">
       <div class="behavior">
         <div class="marker"><span class="d d-run"></span></div>
-        <div><h3>忙时 → 等候区</h3><p>当前轮不会被打断。本轮结束后自动 pop 并接手执行。</p></div>
+        <div><h3>Busy → waiting area</h3><p>The current turn is not interrupted. The message is popped and auto-started when it finishes.</p></div>
       </div>
       <div class="behavior">
         <div class="marker"><span class="d d-wait"></span><span class="d d-wait"></span><span class="d d-wait"></span></div>
-        <div><h3>FIFO，一轮一条</h3><p>多条按入队顺序排，一轮一条，在同一会话内——不会被别的会话抢走。</p></div>
+        <div><h3>FIFO, one per turn</h3><p>Multiple items drain in order, one turn each, in the same session — never stolen by another session.</p></div>
       </div>
       <div class="behavior">
         <div class="marker"><span class="d d-run"></span></div>
-        <div><h3>真实 prompt 抢占</h3><p>忙时发的普通（不带 <code>/queue</code>）请求，永远排在排队项前面。</p></div>
+        <div><h3>Real prompts preempt</h3><p>A normal (non-<code>/queue</code>) prompt submitted while busy always runs before deferred items.</p></div>
       </div>
       <div class="behavior">
         <div class="marker"><span class="d d-wait"></span></div>
-        <div><h3>闲时 → 立即</h3><p>没有在跑的任务，直接当作普通请求处理。</p></div>
+        <div><h3>Idle → immediate</h3><p>Nothing to wait behind — handled at once as a normal turn.</p></div>
       </div>
     </div>
   </div>
@@ -193,71 +194,71 @@
 
 <section>
   <div class="wrap">
-    <p class="eyebrow">前后对比</p>
-    <h2>直接发，还是排队发</h2>
-    <p class="kicker" style="margin-bottom:28px">同一个后续请求，在 Claude 忙时输入。普通消息会在下一个 tool call 处插进来；<code>/queue</code> 会等这一轮跑完。</p>
+    <p class="eyebrow">Before &amp; after</p>
+    <h2>Send it plainly, or queue it</h2>
+    <p class="kicker" style="margin-bottom:28px">Same follow-up, typed while Claude is mid-turn. A plain message cuts in at the next tool call; <code>/queue</code> waits for the turn to finish.</p>
 
     <div class="cc-compare">
       <div>
-        <div class="cc-cap"><span class="cc-cap-dot warn"></span> 不用 /queue — 会插队打断</div>
+        <div class="cc-cap"><span class="cc-cap-dot warn"></span> Without /queue — it interrupts</div>
         <div class="cc">
           <div class="cc-bar"><i></i><i></i><i></i><span class="cc-title">claude-code</span></div>
           <div class="cc-scr">
-            <div class="cc-line cc-prompt"><span class="cc-chev">❯</span> 重构 auth 模块</div>
+            <div class="cc-line cc-prompt"><span class="cc-chev">❯</span> refactor the auth module</div>
             <div class="cc-line"><span class="cc-spin">✻</span> <span class="cc-amber">Working…</span> <span class="cc-dim">(6s · esc to interrupt)</span></div>
             <div class="cc-line"><span class="cc-tool">⏺</span> Edit <span class="cc-dim">src/auth/session.ts</span></div>
-            <div class="cc-line cc-prompt"><span class="cc-chev">❯</span> 顺手也更新下 README</div>
-            <div class="cc-line cc-warn">↳ 在下一个 tool call 处插入 — 重构被打断改道</div>
+            <div class="cc-line cc-prompt"><span class="cc-chev">❯</span> also update the README</div>
+            <div class="cc-line cc-warn">↳ injected at the next tool call — the refactor gets redirected</div>
           </div>
         </div>
       </div>
       <div>
-        <div class="cc-cap"><span class="cc-cap-dot ok"></span> 用 /queue — 会等待</div>
+        <div class="cc-cap"><span class="cc-cap-dot ok"></span> With /queue — it waits</div>
         <div class="cc">
           <div class="cc-bar"><i></i><i></i><i></i><span class="cc-title">claude-code</span></div>
           <div class="cc-scr">
-            <div class="cc-line cc-prompt"><span class="cc-chev">❯</span> 重构 auth 模块</div>
+            <div class="cc-line cc-prompt"><span class="cc-chev">❯</span> refactor the auth module</div>
             <div class="cc-line"><span class="cc-spin">✻</span> <span class="cc-amber">Working…</span> <span class="cc-dim">(6s · esc to interrupt)</span></div>
             <div class="cc-line"><span class="cc-tool">⏺</span> Edit <span class="cc-dim">src/auth/session.ts</span></div>
             <div class="cc-queued">
               <div class="cc-rule"></div>
-              <div class="cc-line"><span class="cc-chev">❯</span> <span class="cc-q">/queue</span> 顺手也更新下 README</div>
+              <div class="cc-line"><span class="cc-chev">❯</span> <span class="cc-q">/queue</span> also update the README</div>
               <div class="cc-rule"></div>
             </div>
-            <div class="cc-line cc-ok">✓ auth 模块重构完成</div>
-            <div class="cc-line cc-prompt"><span class="cc-chev">❯</span> 顺手也更新下 README</div>
+            <div class="cc-line cc-ok">✓ auth module refactored</div>
+            <div class="cc-line cc-prompt"><span class="cc-chev">❯</span> also update the README</div>
           </div>
         </div>
       </div>
     </div>
 
     <div class="cc-single">
-      <div class="cc-cap"><span class="cc-cap-dot"></span> FIFO — 排好几条，一轮一条</div>
+      <div class="cc-cap"><span class="cc-cap-dot"></span> FIFO — line up several, one per turn</div>
       <div class="cc">
         <div class="cc-bar"><i></i><i></i><i></i><span class="cc-title">claude-code</span></div>
         <div class="cc-scr">
           <div class="cc-line"><span class="cc-spin">✻</span> <span class="cc-amber">Working…</span> <span class="cc-dim">(3s · esc to interrupt)</span></div>
           <div class="cc-queued">
             <div class="cc-rule"></div>
-            <div class="cc-line"><span class="cc-chev">❯</span> <span class="cc-q">/queue</span> 更新 README，加上新参数</div>
-            <div class="cc-line"><span class="cc-chev">❯</span> <span class="cc-q">/queue</span> 提交并推送</div>
+            <div class="cc-line"><span class="cc-chev">❯</span> <span class="cc-q">/queue</span> update the README with the new flag</div>
+            <div class="cc-line"><span class="cc-chev">❯</span> <span class="cc-q">/queue</span> commit and push</div>
             <div class="cc-rule"></div>
             <div class="cc-line cc-hint"><span class="cc-chev">❯</span> <span class="cc-block">P</span>ress up to edit queued messages</div>
           </div>
-          <div class="cc-line cc-dim" style="margin-top:7px">— 按入队顺序排空，一轮一条 —</div>
+          <div class="cc-line cc-dim" style="margin-top:7px">— they drain in order, one per turn —</div>
         </div>
       </div>
     </div>
 
-    <p class="kicker" style="margin-top:34px;font-size:14px">没有 hook、没有守护进程、没有存储——只有一个命令定义。按 ↑ 可编辑排队中的消息（原生功能）。原理详见 <a href="https://github.com/jinhuang712/claude-code-queue" style="border-bottom:1px solid var(--rule)">仓库</a>。</p>
+    <p class="kicker" style="margin-top:34px;font-size:14px">No hooks, no daemon, no storage — just a command definition. Press ↑ to edit what's queued (native). See the <a href="https://github.com/jinhuang712/claude-code-queue" style="border-bottom:1px solid var(--rule)">repo</a> for how it works.</p>
   </div>
 </section>
 
 <footer>
   <div class="wrap row">
     <a href="https://github.com/jinhuang712/claude-code-queue">GitHub → jinhuang712/claude-code-queue</a>
-    <a href="en_US.html">English</a>
-    <span class="muted">MIT 协议</span>
+    <a href="cn_ZH.html">中文</a>
+    <span class="muted">MIT licensed</span>
   </div>
 </footer>
 <script>
