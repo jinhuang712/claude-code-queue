@@ -8,9 +8,13 @@ storage. Read the "History" section before adding any.
 
 - `SKILL.md` — the whole skill: frontmatter (`disable-model-invocation: true`,
   user-invoked only) + the instruction body delivered with each queued request.
-- `commands/queue.md` — registers `/queue` (same body as SKILL.md; keep them
-  in sync).
-- `.claude-plugin/` — plugin/marketplace manifests for `/plugin install`.
+  Under `~/.claude/skills/queue/`, the directory name is what registers
+  `/queue` — no separate command file needed.
+- `.claude-plugin/` — plugin/marketplace manifests, kept as an optional
+  install path. Not verified whether a plugin-bundled root `SKILL.md` gets
+  namespaced to `/claude-code-queue:queue` instead of plain `/queue` — check
+  this before recommending the plugin path, and reintroduce a `commands/`
+  file if it does (a bare `.claude/commands/*.md` is not namespaced).
 - `assets/` — GitHub Pages landing pages (EN/ZH); not part of the mechanism.
 
 ## History — why there is no code
@@ -29,7 +33,6 @@ history (`hooks/queue-hook.py` et al.) if you need the old implementation.
 ## Conventions
 
 - One concern per commit; messages explain *why* (the failure mode addressed).
-- Keep `SKILL.md` and `commands/queue.md` bodies identical.
 - Don't reintroduce hooks/scripts unless native behavior regresses — verify
   against a real session transcript (`~/.claude/projects/<proj>/<sid>.jsonl`,
   `queue-operation` records) before believing any claim about delivery timing.
