@@ -10,12 +10,14 @@ storage. Read the "History" section before adding any.
   user-invoked only) + the instruction body delivered with each queued request.
   Installed at `~/.claude/skills/queue/`, the **directory name** is what
   registers `/queue`.
-- `install.sh` — the `curl … | bash` installer. Fetches only `SKILL.md` from
-  raw master into `~/.claude/skills/queue/`; idempotent (re-run = update).
-- `index.html` + `.nojekyll` + `assets/` — GitHub Pages: `.nojekyll` disables
-  Jekyll so `install.sh` is served raw at
-  `jinhuang712.github.io/claude-code-queue/install.sh`; `assets/` are the EN/ZH
-  landing pages. None of this is part of the mechanism.
+- `docs/` — the entire GitHub Pages site (repo Settings → Pages → source is set
+  to `/docs`, not root — keeps the repo root to just the skill + its docs).
+  `index.html` is the EN landing page directly (no redirect stub); `cn_ZH.html`
+  is the ZH landing page; `install.sh` is the `curl … | bash` installer,
+  fetching only `SKILL.md` from raw master into `~/.claude/skills/queue/`
+  (idempotent — re-run to update); `.nojekyll` disables Jekyll so `install.sh`
+  is served byte-for-byte at `jinhuang712.github.io/claude-code-queue/install.sh`.
+  None of this is part of the mechanism.
 
 ## Ships as a standalone skill, NOT a plugin
 
