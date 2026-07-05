@@ -1,11 +1,11 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-marketplace.json",
-  "name": "claude-code-queue",
+  "name": "jinhuang712",
   "owner": { "name": "Huang Jin" },
-  "description": "A prompt queue for Claude Code — the claude-code-queue plugin and its marketplace.",
+  "description": "Huang Jin's Claude Code plugins.",
   "plugins": [
     {
-      "name": "claude-code-queue",
+      "name": "queue",
       "source": "./",
       "description": "A prompt queue for Claude Code.",
       "author": { "name": "Huang Jin" },
