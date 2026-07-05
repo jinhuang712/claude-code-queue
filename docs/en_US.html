@@ -203,7 +203,7 @@
     };
   }
 
-  function Panel(el){ this.scr = el.querySelector('.cc-scr'); this.spin = null; this.clock = null; }
+  function Panel(el){ this.scr = el.querySelector('.cc-scr'); this.spin = null; this.clock = null; this.queueBox = null; }
   Panel.prototype.line = function(cls, html){
     var e = document.createElement('div');
     e.className = 'cc-line' + (cls ? ' ' + cls : '');
@@ -227,16 +227,19 @@
     this.clock = setInterval(function(){ c.textContent = (++t); }, 1000);
     return e;
   };
-  Panel.prototype.queued = function(items){
+  Panel.prototype.setQueue = function(items){
+    if (this.queueBox) { this.queueBox.remove(); this.queueBox = null; }
+    if (!items || !items.length) return null;
     var b = document.createElement('div'); b.className = 'cc-queued';
     var html = '<div class="cc-rule"></div>';
     items.forEach(function(t){ html += '<div class="cc-line"><span class="cc-chev">❯</span> <span class="cc-q">/queue</span> ' + t + '</div>'; });
     html += '<div class="cc-rule"></div><div class="cc-line cc-hint"><span class="cc-chev">❯</span> <span class="cc-block">P</span>ress up to edit queued messages</div>';
     b.innerHTML = html;
     this.scr.appendChild(b);
+    this.queueBox = b;
     return b;
   };
-  Panel.prototype.clear = function(){ this.stopThink(); this.scr.innerHTML = ''; };
+  Panel.prototype.clear = function(){ this.stopThink(); this.scr.innerHTML = ''; this.queueBox = null; };
 
   var heroWrap = document.getElementById('hero-compare');
   if (heroWrap) {
@@ -250,14 +253,14 @@
       var s = scheduler();
       (function loop(){
         s.clear(); A.clear(); B.clear();
-        var thA, thB, qb;
+        var thA, thB;
         A.prompt(d.task); B.prompt(d.task);
         s.after(400, function(){ thA = A.think(); thB = B.think(); });
         s.after(1300, function(){ A.tool('Edit', d.file); B.tool('Edit', d.file); });
-        s.after(2400, function(){ A.prompt(d.followup); qb = B.queued([d.followup]); });
+        s.after(2400, function(){ A.prompt(d.followup); B.setQueue([d.followup]); });
         s.after(2800, function(){ A.stopThink(); if (thA) thA.remove(); A.warn('↳ ' + d.interrupt); });
         s.after(3300, function(){ thA = A.think(); });
-        s.after(4300, function(){ B.stopThink(); if (thB) thB.remove(); B.ok(d.ok1); if (qb) qb.remove(); B.prompt(d.followup); thB = B.think(); });
+        s.after(4300, function(){ B.stopThink(); if (thB) thB.remove(); B.ok(d.ok1); B.setQueue([]); B.prompt(d.followup); thB = B.think(); });
         s.after(4700, function(){ A.tool('Write', d.file); });
         s.after(5400, function(){ A.stopThink(); if (thA) thA.remove(); A.ok(d.ok2); });
         s.after(5900, function(){ B.tool('Write', d.file); });
@@ -279,16 +282,16 @@
       var sf = scheduler();
       (function loop(){
         sf.clear(); F.clear();
-        var th, qb;
+        var th;
         F.prompt(fd.task0);
         sf.after(400, function(){ th = F.think(); });
         sf.after(1300, function(){ F.tool('Edit', fd.file); });
-        sf.after(2200, function(){ qb = F.queued([fd.q1, fd.q2]); });
+        sf.after(2200, function(){ F.setQueue([fd.q1, fd.q2]); });
         sf.after(4200, function(){ F.stopThink(); if (th) th.remove(); F.ok(fd.ok0); });
-        sf.after(4600, function(){ if (qb) qb.remove(); F.prompt(fd.q1); th = F.think(); });
+        sf.after(4600, function(){ F.setQueue([]); F.prompt(fd.q1); th = F.think(); F.setQueue([fd.q2]); });
         sf.after(5900, function(){ F.tool('Edit', fd.file); });
         sf.after(6700, function(){ F.stopThink(); if (th) th.remove(); F.ok(fd.ok1); });
-        sf.after(7100, function(){ F.prompt(fd.q2); th = F.think(); });
+        sf.after(7100, function(){ F.setQueue([]); F.prompt(fd.q2); th = F.think(); });
         sf.after(8300, function(){ F.tool('Bash', fd.cmd); });
         sf.after(9100, function(){ F.stopThink(); if (th) th.remove(); F.ok(fd.ok2); });
         sf.after(9500, function(){ F.line('cc-dim', fd.drain); });
