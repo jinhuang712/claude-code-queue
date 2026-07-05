@@ -86,6 +86,43 @@
   footer a{text-decoration:none;border-bottom:1px solid var(--rule);padding-bottom:1px}
   footer a:hover{border-color:var(--amber);color:var(--ink)}
   .muted{color:var(--ink-2)}
+
+  /* Claude Code terminal replica */
+  .cc{--cc-bg:#191926;--cc-surface:#2b2c3d;--cc-text:#cdd6f4;--cc-dim:#7a7f95;--cc-amber:#e6a15c;--cc-teal:#93e0d2;--cc-rule:#5d9bd6;--cc-green:#a6e3a1;--cc-chev:#6b7089;
+    background:var(--cc-bg);border-radius:12px;overflow:hidden;box-shadow:0 30px 60px -28px rgba(20,16,30,.55);
+    font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.62;color:var(--cc-text)}
+  .cc-bar{display:flex;align-items:center;gap:7px;padding:11px 14px;background:#11111b}
+  .cc-bar i{width:11px;height:11px;border-radius:50%;display:inline-block}
+  .cc-bar i:nth-child(1){background:#f38ba8}
+  .cc-bar i:nth-child(2){background:#f9e2af}
+  .cc-bar i:nth-child(3){background:#a6e3a1}
+  .cc-bar .cc-title{margin-left:6px;color:#585b70;font-size:11px}
+  .cc-scr{padding:15px 16px 17px}
+  .cc[data-anim] .cc-scr{min-height:300px}
+  .cc-line{white-space:pre-wrap;word-break:break-word}
+  .cc-prompt{background:var(--cc-surface);margin:2px -16px;padding:3px 16px}
+  .cc-chev{color:var(--cc-chev)}
+  .cc-amber{color:var(--cc-amber)}
+  .cc-dim{color:var(--cc-dim)}
+  .cc-tool{color:var(--cc-teal)}
+  .cc-ok{color:var(--cc-green)}
+  .cc-warn{color:var(--cc-amber)}
+  .cc-spin{color:var(--cc-amber);display:inline-block;width:1ch}
+  .cc-q{color:var(--cc-amber)}
+  .cc-queued{margin:9px 0 2px}
+  .cc-rule{border-top:1px solid var(--cc-rule);opacity:.6;margin:6px -16px}
+  .cc-hint{color:var(--cc-dim)}
+  .cc-block{background:var(--cc-text);color:var(--cc-bg)}
+  .cc-cur{display:inline-block;width:7px;height:14px;background:var(--cc-text);vertical-align:-2px;animation:ccblink 1.1s steps(1) infinite;margin-left:1px}
+  @keyframes ccblink{50%{opacity:0}}
+  .cc-compare{display:grid;gap:20px;grid-template-columns:1fr}
+  @media(min-width:760px){.cc-compare{grid-template-columns:1fr 1fr}}
+  .cc-single{margin-top:20px}
+  .cc-cap{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-2);margin:0 0 9px;display:flex;align-items:center;gap:8px}
+  .cc-cap-dot{width:8px;height:8px;border-radius:50%;background:#93b7e0;flex:none}
+  .cc-cap-dot.warn{background:#e6a15c}
+  .cc-cap-dot.ok{background:#4fae72}
+  @media(prefers-reduced-motion:reduce){.cc-cur,.cc-spin{animation:none}}
 </style>
 </head>
 <body>
@@ -109,22 +146,14 @@
 <span class="dim"># restart Claude Code — you now have a bare /queue</span></pre>
       </div>
     </div>
-    <div class="term" aria-label="terminal demo">
-      <div class="bar"><i></i><i></i><i></i></div>
-      <div class="body">
-        <div>✻ <span class="out">Working… refactoring the auth module</span></div>
-        <div>⏺ Edit <span class="out">src/auth/session.ts</span></div>
-        <div>⏺ Bash <span class="out">npm run typecheck</span> · <span class="green">ok</span></div>
-        <div><span class="prompt">&gt;</span> <span class="amber">/queue</span> then run the tests and fix failures</div>
-        <div class="out">↑ queued — the running turn is left untouched</div>
-        <div>⏺ Write <span class="out">src/auth/session.ts</span> · <span class="green">done</span></div>
-        <div class="green">✓ auth module refactored</div>
-        <div class="out">─── turn ends · the queued request starts ───</div>
-        <div><span class="prompt">&gt;</span> <span class="amber">/queue</span> then run the tests and fix failures</div>
-        <div>⏺ Bash <span class="out">npm test</span> · <span class="green">128 passed</span></div>
-        <div class="green">✓ all green — nothing to fix</div>
-        <div><span class="cursor"></span></div>
-      </div>
+    <div class="cc" data-anim role="img"
+         aria-label="Animated Claude Code session: a follow-up is queued with /queue while Claude is mid-turn, and it auto-runs once the turn ends."
+         data-p1="refactor the auth module"
+         data-p2="then run the tests and fix any failures"
+         data-ok1="auth module refactored"
+         data-ok2="128 passed — all green">
+      <div class="cc-bar"><i></i><i></i><i></i><span class="cc-title">claude-code</span></div>
+      <div class="cc-scr"></div>
     </div>
   </div>
 </section>
@@ -164,27 +193,60 @@
 
 <section>
   <div class="wrap">
-    <p class="eyebrow">Examples</p>
-    <h2>Using it</h2>
+    <p class="eyebrow">Before &amp; after</p>
+    <h2>Send it plainly, or queue it</h2>
+    <p class="kicker" style="margin-bottom:28px">Same follow-up, typed while Claude is mid-turn. A plain message cuts in at the next tool call; <code>/queue</code> waits for the turn to finish.</p>
 
-    <div class="example">
-      <h4>Queue a follow-up while busy</h4>
-      <p class="cap">Claude is mid-turn. Line up the next task without cutting in:</p>
-<pre><span class="prompt">/queue</span> then run the test suite and fix anything that breaks
-<span class="dim"># held natively; runs after the current turn ends</span></pre>
+    <div class="cc-compare">
+      <div>
+        <div class="cc-cap"><span class="cc-cap-dot warn"></span> Without /queue — it interrupts</div>
+        <div class="cc">
+          <div class="cc-bar"><i></i><i></i><i></i><span class="cc-title">claude-code</span></div>
+          <div class="cc-scr">
+            <div class="cc-line cc-prompt"><span class="cc-chev">❯</span> refactor the auth module</div>
+            <div class="cc-line"><span class="cc-spin">✻</span> <span class="cc-amber">Working…</span> <span class="cc-dim">(6s · esc to interrupt)</span></div>
+            <div class="cc-line"><span class="cc-tool">⏺</span> Edit <span class="cc-dim">src/auth/session.ts</span></div>
+            <div class="cc-line cc-prompt"><span class="cc-chev">❯</span> also update the README</div>
+            <div class="cc-line cc-warn">↳ injected at the next tool call — the refactor gets redirected</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="cc-cap"><span class="cc-cap-dot ok"></span> With /queue — it waits</div>
+        <div class="cc">
+          <div class="cc-bar"><i></i><i></i><i></i><span class="cc-title">claude-code</span></div>
+          <div class="cc-scr">
+            <div class="cc-line cc-prompt"><span class="cc-chev">❯</span> refactor the auth module</div>
+            <div class="cc-line"><span class="cc-spin">✻</span> <span class="cc-amber">Working…</span> <span class="cc-dim">(6s · esc to interrupt)</span></div>
+            <div class="cc-line"><span class="cc-tool">⏺</span> Edit <span class="cc-dim">src/auth/session.ts</span></div>
+            <div class="cc-queued">
+              <div class="cc-rule"></div>
+              <div class="cc-line"><span class="cc-chev">❯</span> <span class="cc-q">/queue</span> also update the README</div>
+              <div class="cc-rule"></div>
+            </div>
+            <div class="cc-line cc-ok">✓ auth module refactored</div>
+            <div class="cc-line cc-prompt"><span class="cc-chev">❯</span> also update the README</div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="example">
-      <h4>Line up several (FIFO, one per turn)</h4>
-<pre><span class="prompt">/queue</span> update the README with the new flag
-<span class="prompt">/queue</span> commit and push</pre>
-    </div>
-
-    <div class="example">
-      <h4>A real prompt preempts</h4>
-      <p class="cap">Normal prompts run before deferred ones:</p>
-<pre><span class="prompt">/queue</span> polish the docs later
-actually fix this blocking bug first   <span class="amber"># runs first</span></pre>
+    <div class="cc-single">
+      <div class="cc-cap"><span class="cc-cap-dot"></span> FIFO — line up several, one per turn</div>
+      <div class="cc">
+        <div class="cc-bar"><i></i><i></i><i></i><span class="cc-title">claude-code</span></div>
+        <div class="cc-scr">
+          <div class="cc-line"><span class="cc-spin">✻</span> <span class="cc-amber">Working…</span> <span class="cc-dim">(3s · esc to interrupt)</span></div>
+          <div class="cc-queued">
+            <div class="cc-rule"></div>
+            <div class="cc-line"><span class="cc-chev">❯</span> <span class="cc-q">/queue</span> update the README with the new flag</div>
+            <div class="cc-line"><span class="cc-chev">❯</span> <span class="cc-q">/queue</span> commit and push</div>
+            <div class="cc-rule"></div>
+            <div class="cc-line cc-hint"><span class="cc-chev">❯</span> <span class="cc-block">P</span>ress up to edit queued messages</div>
+          </div>
+          <div class="cc-line cc-dim" style="margin-top:7px">— they drain in order, one per turn —</div>
+        </div>
+      </div>
     </div>
 
     <p class="kicker" style="margin-top:34px;font-size:14px">No hooks, no daemon, no storage — just a command definition. Press ↑ to edit what's queued (native). See the <a href="https://github.com/jinhuang712/claude-code-queue" style="border-bottom:1px solid var(--rule)">repo</a> for how it works.</p>
@@ -198,5 +260,64 @@ actually fix this blocking bug first   <span class="amber"># runs first</span></
     <span class="muted">MIT licensed</span>
   </div>
 </footer>
+<script>
+(function(){
+  var host=document.querySelector('.cc[data-anim]');
+  if(!host) return;
+  var scr=host.querySelector('.cc-scr');
+  var d=host.dataset;
+  var reduce=window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var GL=['✳','✻','✽','✻'], timers=[], spin=null, clock=null;
+
+  function line(cls,html){var e=document.createElement('div');e.className='cc-line'+(cls?' '+cls:'');e.innerHTML=html;scr.appendChild(e);return e;}
+  function prompt(t){return line('cc-prompt','<span class="cc-chev">❯</span> '+t);}
+  function tool(n,a){return line('','<span class="cc-tool">⏺</span> '+n+' <span class="cc-dim">'+a+'</span>');}
+  function ok(t){return line('cc-ok','✓ '+t);}
+  function after(ms,fn){timers.push(setTimeout(fn,ms));}
+  function stopThink(){if(spin){clearInterval(spin);spin=null;}if(clock){clearInterval(clock);clock=null;}}
+  function clearAll(){timers.forEach(clearTimeout);timers=[];stopThink();}
+  function think(word){
+    var e=line('','<span class="cc-spin">✳</span> <span class="cc-amber">'+word+'</span> <span class="cc-dim">(<span class="cc-clock">0</span>s · esc to interrupt)</span>');
+    var g=0, s=e.querySelector('.cc-spin'); spin=setInterval(function(){s.textContent=GL[g=(g+1)%GL.length];},130);
+    var t=0, c=e.querySelector('.cc-clock'); clock=setInterval(function(){c.textContent=(++t);},1000);
+    return e;
+  }
+  function queued(t){
+    var b=document.createElement('div'); b.className='cc-queued';
+    b.innerHTML='<div class="cc-rule"></div>'+
+      '<div class="cc-line"><span class="cc-chev">❯</span> <span class="cc-q">/queue</span> '+t+'</div>'+
+      '<div class="cc-rule"></div>'+
+      '<div class="cc-line cc-hint"><span class="cc-chev">❯</span> <span class="cc-block">P</span>ress up to edit queued messages</div>';
+    scr.appendChild(b); return b;
+  }
+
+  if(reduce){
+    prompt(d.p1);
+    line('','<span class="cc-spin">✻</span> <span class="cc-amber">Puzzling…</span> <span class="cc-dim">(4s · esc to interrupt)</span>');
+    tool('Edit','src/auth/session.ts');
+    queued(d.p2);
+    ok(d.ok1); prompt(d.p2); ok(d.ok2);
+    return;
+  }
+
+  function play(){
+    clearAll(); scr.innerHTML='';
+    var th, qb;
+    prompt(d.p1);
+    after(500,function(){th=think('Puzzling…');});
+    after(1400,function(){tool('Read','src/auth/session.ts');});
+    after(2200,function(){tool('Edit','src/auth/session.ts');});
+    after(2800,function(){qb=queued(d.p2);});
+    after(4400,function(){stopThink(); if(th)th.remove(); tool('Write','src/auth/session.ts');});
+    after(4900,function(){ok(d.ok1);});
+    after(5800,function(){if(qb)qb.remove(); prompt(d.p2); th=think('Testing…');});
+    after(6800,function(){tool('Bash','npm test');});
+    after(7800,function(){stopThink(); if(th)th.remove(); ok(d.ok2);});
+    after(8400,function(){line('cc-prompt','<span class="cc-chev">❯</span> <span class="cc-cur"></span>');});
+    after(11800,play);
+  }
+  play();
+})();
+</script>
 </body>
 </html>
