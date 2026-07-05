@@ -30,13 +30,12 @@
   .lang{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--ink-2);text-decoration:none;border:1px solid var(--rule);padding:6px 13px;border-radius:999px;transition:border-color .15s,color .15s}
   .lang:hover{color:var(--ink);border-color:var(--ink-2)}
 
-  .hero{padding:84px 0 60px;border-bottom:1px solid var(--rule)}
-  .hero .grid{display:grid;grid-template-columns:1fr;gap:40px}
-  @media(min-width:900px){.hero .grid{grid-template-columns:1.05fr .95fr;align-items:center;gap:48px}}
+  .hero{padding:76px 0 64px;border-bottom:1px solid var(--rule)}
   .hero h1{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:clamp(40px,8vw,74px);line-height:1.02;letter-spacing:-.035em;margin:0 0 22px}
   .hero h1 .q{color:var(--amber)}
-  .hero .lead{font-size:clamp(17px,2.2vw,21px);color:var(--ink-2);max-width:42ch;margin:0 0 30px}
+  .hero .lead{font-size:clamp(17px,2.2vw,21px);color:var(--ink-2);max-width:62ch;margin:0 0 8px}
   .hero .lead strong{color:var(--ink)}
+  .hero .cc-compare{margin-top:38px}
   code,pre{font-family:'IBM Plex Mono',monospace}
   :not(pre)>code{background:var(--paper-2);padding:2px 6px;border-radius:4px;font-size:.9em;border:1px solid var(--rule)}
   pre{background:var(--term-bg);color:var(--term-ink);padding:16px 18px;border-radius:10px;overflow-x:auto;font-size:13px;line-height:1.75;margin:0}
@@ -44,43 +43,12 @@
   pre .amber{color:var(--term-amber)}
   pre .dim{color:var(--term-dim)}
 
-  .quick{margin-top:8px}
-  .quick h3{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);margin:0 0 10px;font-weight:500}
-
-  /* the signature terminal */
-  .term{background:var(--term-bg);border-radius:12px;overflow:hidden;box-shadow:0 30px 60px -28px rgba(28,20,10,.45);font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.75}
-  .term .bar{display:flex;gap:7px;padding:12px 14px;background:#0E0E12}
-  .term .bar i{width:11px;height:11px;border-radius:50%;display:inline-block}
-  .term .bar i:nth-child(1){background:#FF5F57}
-  .term .bar i:nth-child(2){background:#FEBC2E}
-  .term .bar i:nth-child(3){background:#28C840}
-  .term .body{padding:18px 20px 22px;color:var(--term-ink)}
-  .term .out{color:var(--term-dim)}
-  .term .amber{color:var(--term-amber)}
-  .term .green{color:var(--term-green)}
-  .term .cursor{display:inline-block;width:8px;height:15px;background:var(--term-ink);vertical-align:-2px;animation:blink 1.1s steps(1) infinite}
-  @keyframes blink{50%{opacity:0}}
-  @media(prefers-reduced-motion:reduce){.term .cursor{animation:none}*{transition:none!important}}
-
   section{padding:68px 0;border-bottom:1px solid var(--rule)}
   .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--amber);margin:0 0 12px}
   section h2{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:clamp(23px,3.6vw,31px);letter-spacing:-.02em;margin:0 0 14px}
   section p.kicker{color:var(--ink-2);max-width:68ch;margin:0;font-size:17px}
 
-  .behaviors{margin-top:30px}
-  .behavior{display:grid;grid-template-columns:40px 1fr;gap:18px;padding:22px 0;border-top:1px solid var(--rule);align-items:start}
-  .behavior:last-child{border-bottom:1px solid var(--rule)}
-  .behavior .marker{display:flex;gap:6px;padding-top:7px}
-  .marker .d{width:11px;height:11px;border-radius:50%}
-  .d-run{background:var(--green)}
-  .d-wait{background:transparent;box-shadow:inset 0 0 0 2px var(--amber)}
-  .behavior h3{margin:0 0 4px;font-size:17px;font-weight:600}
-  .behavior p{margin:0;color:var(--ink-2);max-width:60ch}
-
-  .example{margin:30px 0}
-  .example:first-of-type{margin-top:8px}
-  .example h4{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;margin:0 0 6px}
-  .example .cap{font-size:14px;color:var(--ink-2);margin:0 0 12px;max-width:60ch}
+  .install-section{padding:0 0 56px}
 
   footer{padding:44px 0 72px;color:var(--ink-2);font-size:14px}
   footer .row{display:flex;gap:24px;flex-wrap:wrap;align-items:center}
@@ -99,7 +67,7 @@
   .cc-bar i:nth-child(3){background:#a6e3a1}
   .cc-bar .cc-title{margin-left:6px;color:#585b70;font-size:11px}
   .cc-scr{padding:15px 16px 17px}
-  .cc[data-anim] .cc-scr{min-height:300px}
+  .cc[data-anim] .cc-scr{min-height:250px}
   .cc-line{white-space:pre-wrap;word-break:break-word}
   .cc-prompt{background:var(--cc-surface);margin:2px -16px;padding:3px 16px}
   .cc-chev{color:var(--cc-chev)}
@@ -118,7 +86,7 @@
   @keyframes ccblink{50%{opacity:0}}
   .cc-compare{display:grid;gap:20px;grid-template-columns:1fr}
   @media(min-width:760px){.cc-compare{grid-template-columns:1fr 1fr}}
-  .cc-single{margin-top:20px}
+  .cc-mini{max-width:420px}
   .cc-cap{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-2);margin:0 0 9px;display:flex;align-items:center;gap:8px}
   .cc-cap-dot{width:8px;height:8px;border-radius:50%;background:#93b7e0;flex:none}
   .cc-cap-dot.warn{background:#e6a15c}
@@ -135,27 +103,41 @@
 </header>
 
 <section class="hero">
-  <div class="wrap grid">
+  <div class="wrap">
+    <h1>queue<span class="q">,</span> not interrupt.</h1>
+    <p class="lead">A prompt queue for Claude Code. Type <code>/queue …</code> while Claude is busy and the message waits — it runs <strong>after</strong> the current turn, instead of interrupting it.</p>
+  </div>
+  <div class="wrap cc-compare" id="hero-compare"
+       data-task="refactor the auth module"
+       data-followup="also update the README"
+       data-file="src/auth/session.ts"
+       data-interrupt="interrupted — the refactor never finished"
+       data-ok1="auth module refactored"
+       data-ok2="README updated">
     <div>
-      <h1>queue<span class="q">,</span> not interrupt.</h1>
-      <p class="lead">A prompt queue for Claude Code. Type <code>/queue …</code> while Claude is busy and the message waits — it runs <strong>after</strong> the current turn, instead of being injected at the next tool-call boundary.</p>
-      <div class="quick">
-        <h3>Install</h3>
+      <div class="cc-cap"><span class="cc-cap-dot warn"></span> Without /queue — it interrupts</div>
+      <div class="cc" data-anim id="hero-nq" role="img" aria-label="Animated demo: a plain follow-up message interrupts Claude mid-turn before the first task finishes.">
+        <div class="cc-bar"><i></i><i></i><i></i><span class="cc-title">claude-code</span></div>
+        <div class="cc-scr"></div>
+      </div>
+    </div>
+    <div>
+      <div class="cc-cap"><span class="cc-cap-dot ok"></span> With /queue — it waits</div>
+      <div class="cc" data-anim id="hero-q" role="img" aria-label="Animated demo: a /queue follow-up waits until the current turn finishes, then runs automatically.">
+        <div class="cc-bar"><i></i><i></i><i></i><span class="cc-title">claude-code</span></div>
+        <div class="cc-scr"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="install-section">
+  <div class="wrap">
+    <p class="eyebrow">Install</p>
 <pre><span class="prompt">$</span> curl -fsSL \
   https://jinhuang712.github.io/claude-code-queue/install.sh \
   | bash
 <span class="dim"># restart Claude Code — you now have a bare /queue</span></pre>
-      </div>
-    </div>
-    <div class="cc" data-anim role="img"
-         aria-label="Animated Claude Code session: a follow-up is queued with /queue while Claude is mid-turn, and it auto-runs once the turn ends."
-         data-p1="refactor the auth module"
-         data-p2="then run the tests and fix any failures"
-         data-ok1="auth module refactored"
-         data-ok2="128 passed — all green">
-      <div class="cc-bar"><i></i><i></i><i></i><span class="cc-title">claude-code</span></div>
-      <div class="cc-scr"></div>
-    </div>
   </div>
 </section>
 
@@ -169,84 +151,31 @@
 
 <section>
   <div class="wrap">
-    <p class="eyebrow">Behavior</p>
-    <h2>How a queued message is treated</h2>
-    <div class="behaviors">
-      <div class="behavior">
-        <div class="marker"><span class="d d-run"></span></div>
-        <div><h3>Busy → waiting area</h3><p>The current turn is not interrupted. The message is popped and auto-started when it finishes.</p></div>
-      </div>
-      <div class="behavior">
-        <div class="marker"><span class="d d-wait"></span><span class="d d-wait"></span><span class="d d-wait"></span></div>
-        <div><h3>FIFO, one per turn</h3><p>Multiple items drain in order, one turn each, in the same session — never stolen by another session.</p></div>
-      </div>
-      <div class="behavior">
-        <div class="marker"><span class="d d-run"></span></div>
-        <div><h3>Real prompts preempt</h3><p>A normal (non-<code>/queue</code>) prompt submitted while busy always runs before deferred items.</p></div>
-      </div>
-      <div class="behavior">
-        <div class="marker"><span class="d d-wait"></span></div>
-        <div><h3>Idle → immediate</h3><p>Nothing to wait behind — handled at once as a normal turn.</p></div>
-      </div>
-    </div>
-  </div>
-</section>
+    <p class="eyebrow">Multiple at once</p>
+    <h2>Line up several — they pop one at a time</h2>
+    <p class="kicker" style="margin-bottom:28px">Every <code>/queue</code> sent while Claude is busy joins a first-in-first-out line for that session. Each one drains as its own turn, right after the one ahead of it finishes.</p>
 
-<section>
-  <div class="wrap">
-    <p class="eyebrow">Before &amp; after</p>
-    <h2>Send it plainly, or queue it</h2>
-    <p class="kicker" style="margin-bottom:28px">Same follow-up, typed while Claude is mid-turn. A plain message cuts in at the next tool call; <code>/queue</code> waits for the turn to finish.</p>
-
-    <div class="cc-compare">
-      <div>
-        <div class="cc-cap"><span class="cc-cap-dot warn"></span> Without /queue — it interrupts</div>
-        <div class="cc">
-          <div class="cc-bar"><i></i><i></i><i></i><span class="cc-title">claude-code</span></div>
-          <div class="cc-scr">
-            <div class="cc-line cc-prompt"><span class="cc-chev">❯</span> refactor the auth module</div>
-            <div class="cc-line"><span class="cc-spin">✻</span> <span class="cc-amber">Working…</span> <span class="cc-dim">(6s · esc to interrupt)</span></div>
-            <div class="cc-line"><span class="cc-tool">⏺</span> Edit <span class="cc-dim">src/auth/session.ts</span></div>
-            <div class="cc-line cc-prompt"><span class="cc-chev">❯</span> also update the README</div>
-            <div class="cc-line cc-warn">↳ injected at the next tool call — the refactor gets redirected</div>
-          </div>
-        </div>
-      </div>
-      <div>
-        <div class="cc-cap"><span class="cc-cap-dot ok"></span> With /queue — it waits</div>
-        <div class="cc">
-          <div class="cc-bar"><i></i><i></i><i></i><span class="cc-title">claude-code</span></div>
-          <div class="cc-scr">
-            <div class="cc-line cc-prompt"><span class="cc-chev">❯</span> refactor the auth module</div>
-            <div class="cc-line"><span class="cc-spin">✻</span> <span class="cc-amber">Working…</span> <span class="cc-dim">(6s · esc to interrupt)</span></div>
-            <div class="cc-line"><span class="cc-tool">⏺</span> Edit <span class="cc-dim">src/auth/session.ts</span></div>
-            <div class="cc-queued">
-              <div class="cc-rule"></div>
-              <div class="cc-line"><span class="cc-chev">❯</span> <span class="cc-q">/queue</span> also update the README</div>
-              <div class="cc-rule"></div>
-            </div>
-            <div class="cc-line cc-ok">✓ auth module refactored</div>
-            <div class="cc-line cc-prompt"><span class="cc-chev">❯</span> also update the README</div>
-          </div>
-        </div>
-      </div>
+    <div class="cc-cap"><span class="cc-cap-dot"></span> FIFO — one per turn</div>
+    <div class="cc" data-anim id="fifo-demo" role="img" aria-label="Animated demo: two queued requests wait in order and run one at a time as each turn finishes."
+         data-task0="polish the docs"
+         data-file="README.md"
+         data-q1="update the README with the new flag"
+         data-q2="commit and push"
+         data-cmd="git commit &amp;&amp; git push"
+         data-ok0="docs polished"
+         data-ok1="README updated"
+         data-ok2="pushed"
+         data-drain="— drained in order, one turn each —">
+      <div class="cc-bar"><i></i><i></i><i></i><span class="cc-title">claude-code</span></div>
+      <div class="cc-scr"></div>
     </div>
 
-    <div class="cc-single">
-      <div class="cc-cap"><span class="cc-cap-dot"></span> FIFO — line up several, one per turn</div>
-      <div class="cc">
-        <div class="cc-bar"><i></i><i></i><i></i><span class="cc-title">claude-code</span></div>
-        <div class="cc-scr">
-          <div class="cc-line"><span class="cc-spin">✻</span> <span class="cc-amber">Working…</span> <span class="cc-dim">(3s · esc to interrupt)</span></div>
-          <div class="cc-queued">
-            <div class="cc-rule"></div>
-            <div class="cc-line"><span class="cc-chev">❯</span> <span class="cc-q">/queue</span> update the README with the new flag</div>
-            <div class="cc-line"><span class="cc-chev">❯</span> <span class="cc-q">/queue</span> commit and push</div>
-            <div class="cc-rule"></div>
-            <div class="cc-line cc-hint"><span class="cc-chev">❯</span> <span class="cc-block">P</span>ress up to edit queued messages</div>
-          </div>
-          <div class="cc-line cc-dim" style="margin-top:7px">— they drain in order, one per turn —</div>
-        </div>
+    <div class="cc-cap" style="margin-top:26px"><span class="cc-cap-dot"></span> Nothing running? It just goes.</div>
+    <div class="cc cc-mini">
+      <div class="cc-bar"><i></i><i></i><i></i><span class="cc-title">claude-code</span></div>
+      <div class="cc-scr">
+        <div class="cc-line cc-prompt"><span class="cc-chev">❯</span> <span class="cc-q">/queue</span> refactor the auth module</div>
+        <div class="cc-line"><span class="cc-spin">✳</span> <span class="cc-amber">Working…</span> <span class="cc-dim">(0s · esc to interrupt)</span></div>
       </div>
     </div>
 
@@ -263,61 +192,110 @@
 </footer>
 <script>
 (function(){
-  var host=document.querySelector('.cc[data-anim]');
-  if(!host) return;
-  var scr=host.querySelector('.cc-scr');
-  var d=host.dataset;
-  var reduce=window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var GL=['✳','✻','✽','✻'], timers=[], spin=null, clock=null;
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var GL = ['✳','✻','✽','✻'];
 
-  function line(cls,html){var e=document.createElement('div');e.className='cc-line'+(cls?' '+cls:'');e.innerHTML=html;scr.appendChild(e);return e;}
-  function prompt(t){return line('cc-prompt','<span class="cc-chev">❯</span> '+t);}
-  function tool(n,a){return line('','<span class="cc-tool">⏺</span> '+n+' <span class="cc-dim">'+a+'</span>');}
-  function ok(t){return line('cc-ok','✓ '+t);}
-  function after(ms,fn){timers.push(setTimeout(fn,ms));}
-  function stopThink(){if(spin){clearInterval(spin);spin=null;}if(clock){clearInterval(clock);clock=null;}}
-  function clearAll(){timers.forEach(clearTimeout);timers=[];stopThink();}
-  function think(word){
-    var e=line('','<span class="cc-spin">✳</span> <span class="cc-amber">'+word+'</span> <span class="cc-dim">(<span class="cc-clock">0</span>s · esc to interrupt)</span>');
-    var g=0, s=e.querySelector('.cc-spin'); spin=setInterval(function(){s.textContent=GL[g=(g+1)%GL.length];},130);
-    var t=0, c=e.querySelector('.cc-clock'); clock=setInterval(function(){c.textContent=(++t);},1000);
+  function scheduler(){
+    var timers = [];
+    return {
+      after: function(ms, fn){ timers.push(setTimeout(fn, ms)); },
+      clear: function(){ timers.forEach(clearTimeout); timers = []; }
+    };
+  }
+
+  function Panel(el){ this.scr = el.querySelector('.cc-scr'); this.spin = null; this.clock = null; }
+  Panel.prototype.line = function(cls, html){
+    var e = document.createElement('div');
+    e.className = 'cc-line' + (cls ? ' ' + cls : '');
+    e.innerHTML = html;
+    this.scr.appendChild(e);
     return e;
-  }
-  function queued(t){
-    var b=document.createElement('div'); b.className='cc-queued';
-    b.innerHTML='<div class="cc-rule"></div>'+
-      '<div class="cc-line"><span class="cc-chev">❯</span> <span class="cc-q">/queue</span> '+t+'</div>'+
-      '<div class="cc-rule"></div>'+
-      '<div class="cc-line cc-hint"><span class="cc-chev">❯</span> <span class="cc-block">P</span>ress up to edit queued messages</div>';
-    scr.appendChild(b); return b;
+  };
+  Panel.prototype.prompt = function(t){ return this.line('cc-prompt', '<span class="cc-chev">❯</span> ' + t); };
+  Panel.prototype.tool = function(n, a){ return this.line('', '<span class="cc-tool">⏺</span> ' + n + ' <span class="cc-dim">' + a + '</span>'); };
+  Panel.prototype.ok = function(t){ return this.line('cc-ok', '✓ ' + t); };
+  Panel.prototype.warn = function(html){ return this.line('cc-warn', html); };
+  Panel.prototype.stopThink = function(){
+    if (this.spin) { clearInterval(this.spin); this.spin = null; }
+    if (this.clock) { clearInterval(this.clock); this.clock = null; }
+  };
+  Panel.prototype.think = function(){
+    var e = this.line('', '<span class="cc-spin">✳</span> <span class="cc-amber">Working…</span> <span class="cc-dim">(<span class="cc-clock">0</span>s · esc to interrupt)</span>');
+    var g = 0, s = e.querySelector('.cc-spin');
+    this.spin = setInterval(function(){ s.textContent = GL[g = (g + 1) % GL.length]; }, 130);
+    var t = 0, c = e.querySelector('.cc-clock');
+    this.clock = setInterval(function(){ c.textContent = (++t); }, 1000);
+    return e;
+  };
+  Panel.prototype.queued = function(items){
+    var b = document.createElement('div'); b.className = 'cc-queued';
+    var html = '<div class="cc-rule"></div>';
+    items.forEach(function(t){ html += '<div class="cc-line"><span class="cc-chev">❯</span> <span class="cc-q">/queue</span> ' + t + '</div>'; });
+    html += '<div class="cc-rule"></div><div class="cc-line cc-hint"><span class="cc-chev">❯</span> <span class="cc-block">P</span>ress up to edit queued messages</div>';
+    b.innerHTML = html;
+    this.scr.appendChild(b);
+    return b;
+  };
+  Panel.prototype.clear = function(){ this.stopThink(); this.scr.innerHTML = ''; };
+
+  var heroWrap = document.getElementById('hero-compare');
+  if (heroWrap) {
+    var A = new Panel(document.getElementById('hero-nq'));
+    var B = new Panel(document.getElementById('hero-q'));
+    var d = heroWrap.dataset;
+    if (reduce) {
+      A.prompt(d.task); A.warn('↳ ' + d.interrupt); A.prompt(d.followup); A.ok(d.ok2);
+      B.prompt(d.task); B.ok(d.ok1); B.prompt(d.followup); B.ok(d.ok2);
+    } else {
+      var s = scheduler();
+      (function loop(){
+        s.clear(); A.clear(); B.clear();
+        var thA, thB, qb;
+        A.prompt(d.task); B.prompt(d.task);
+        s.after(400, function(){ thA = A.think(); thB = B.think(); });
+        s.after(1300, function(){ A.tool('Edit', d.file); B.tool('Edit', d.file); });
+        s.after(2400, function(){ A.prompt(d.followup); qb = B.queued([d.followup]); });
+        s.after(2800, function(){ A.stopThink(); if (thA) thA.remove(); A.warn('↳ ' + d.interrupt); });
+        s.after(3300, function(){ thA = A.think(); });
+        s.after(4300, function(){ B.stopThink(); if (thB) thB.remove(); B.ok(d.ok1); if (qb) qb.remove(); B.prompt(d.followup); thB = B.think(); });
+        s.after(4700, function(){ A.tool('Write', d.file); });
+        s.after(5400, function(){ A.stopThink(); if (thA) thA.remove(); A.ok(d.ok2); });
+        s.after(5900, function(){ B.tool('Write', d.file); });
+        s.after(6700, function(){ B.stopThink(); if (thB) thB.remove(); B.ok(d.ok2); });
+        s.after(10200, loop);
+      })();
+    }
   }
 
-  if(reduce){
-    prompt(d.p1);
-    line('','<span class="cc-spin">✻</span> <span class="cc-amber">Puzzling…</span> <span class="cc-dim">(4s · esc to interrupt)</span>');
-    tool('Edit','src/auth/session.ts');
-    queued(d.p2);
-    ok(d.ok1); prompt(d.p2); ok(d.ok2);
-    return;
+  var fifoEl = document.getElementById('fifo-demo');
+  if (fifoEl) {
+    var F = new Panel(fifoEl);
+    var fd = fifoEl.dataset;
+    if (reduce) {
+      F.prompt(fd.task0); F.ok(fd.ok0);
+      F.prompt(fd.q1); F.ok(fd.ok1);
+      F.prompt(fd.q2); F.ok(fd.ok2);
+    } else {
+      var sf = scheduler();
+      (function loop(){
+        sf.clear(); F.clear();
+        var th, qb;
+        F.prompt(fd.task0);
+        sf.after(400, function(){ th = F.think(); });
+        sf.after(1300, function(){ F.tool('Edit', fd.file); });
+        sf.after(2200, function(){ qb = F.queued([fd.q1, fd.q2]); });
+        sf.after(4200, function(){ F.stopThink(); if (th) th.remove(); F.ok(fd.ok0); });
+        sf.after(4600, function(){ if (qb) qb.remove(); F.prompt(fd.q1); th = F.think(); });
+        sf.after(5900, function(){ F.tool('Edit', fd.file); });
+        sf.after(6700, function(){ F.stopThink(); if (th) th.remove(); F.ok(fd.ok1); });
+        sf.after(7100, function(){ F.prompt(fd.q2); th = F.think(); });
+        sf.after(8300, function(){ F.tool('Bash', fd.cmd); });
+        sf.after(9100, function(){ F.stopThink(); if (th) th.remove(); F.ok(fd.ok2); });
+        sf.after(9500, function(){ F.line('cc-dim', fd.drain); });
+        sf.after(12500, loop);
+      })();
+    }
   }
-
-  function play(){
-    clearAll(); scr.innerHTML='';
-    var th, qb;
-    prompt(d.p1);
-    after(500,function(){th=think('Puzzling…');});
-    after(1400,function(){tool('Read','src/auth/session.ts');});
-    after(2200,function(){tool('Edit','src/auth/session.ts');});
-    after(2800,function(){qb=queued(d.p2);});
-    after(4400,function(){stopThink(); if(th)th.remove(); tool('Write','src/auth/session.ts');});
-    after(4900,function(){ok(d.ok1);});
-    after(5800,function(){if(qb)qb.remove(); prompt(d.p2); th=think('Testing…');});
-    after(6800,function(){tool('Bash','npm test');});
-    after(7800,function(){stopThink(); if(th)th.remove(); ok(d.ok2);});
-    after(8400,function(){line('cc-prompt','<span class="cc-chev">❯</span> <span class="cc-cur"></span>');});
-    after(11800,play);
-  }
-  play();
 })();
 </script>
 </body>
