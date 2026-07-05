@@ -25,13 +25,29 @@ clarifying questions; note assumptions; end with a one-line summary).
 
 ## Install
 
-Clone into your skills dir:
+In Claude Code:
+
+```text
+/plugin marketplace add jinhuang712/claude-code-queue
+/plugin install queue@jinhuang712
+/reload-plugins
+```
+
+Verified: this registers a plain `/queue` (a plugin-root `SKILL.md` takes its
+command name from the frontmatter `name`, not the plugin name — no namespace
+prefix).
+
+<details><summary>Or clone into your skills dir</summary>
 
 ```bash
 git clone https://github.com/jinhuang712/claude-code-queue ~/.claude/skills/queue
 ```
 
-Restart Claude Code (skills load at session start). Then:
+Restart Claude Code so it loads (skills load at session start).
+
+</details>
+
+Then:
 
 | You type | What happens |
 |---|---|
