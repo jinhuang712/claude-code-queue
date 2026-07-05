@@ -25,27 +25,20 @@ clarifying questions; note assumptions; end with a one-line summary).
 
 ## Install
 
-In Claude Code:
-
-```text
-/plugin marketplace add jinhuang712/claude-code-queue
-/plugin install queue@jinhuang712
-/reload-plugins
-```
-
-Verified: this registers a plain `/queue` (a plugin-root `SKILL.md` takes its
-command name from the frontmatter `name`, not the plugin name — no namespace
-prefix).
-
-<details><summary>Or clone into your skills dir</summary>
+Clone into your skills directory — the folder name **must** be `queue`, because
+that's what becomes the command:
 
 ```bash
 git clone https://github.com/jinhuang712/claude-code-queue ~/.claude/skills/queue
 ```
 
-Restart Claude Code so it loads (skills load at session start).
+Restart Claude Code (skills load at session start). You now have a bare `/queue`.
 
-</details>
+> **Why not a plugin / marketplace?** Claude Code *always* namespaces a plugin's
+> commands as `/plugin-name:command` — a marketplace install would give you
+> `/queue:queue`, not `/queue`. A bare `/queue` only comes from a standalone
+> skill under `~/.claude/skills/`, so that's how this ships. (Verified against
+> the docs and a live install.)
 
 Then:
 

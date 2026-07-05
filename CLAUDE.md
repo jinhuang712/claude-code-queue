@@ -8,14 +8,22 @@ storage. Read the "History" section before adding any.
 
 - `SKILL.md` — the whole skill: frontmatter (`disable-model-invocation: true`,
   user-invoked only) + the instruction body delivered with each queued request.
-  Under `~/.claude/skills/queue/`, the directory name is what registers
-  `/queue` — no separate command file needed.
-- `.claude-plugin/` — plugin/marketplace manifests, kept as an optional
-  install path. Not verified whether a plugin-bundled root `SKILL.md` gets
-  namespaced to `/claude-code-queue:queue` instead of plain `/queue` — check
-  this before recommending the plugin path, and reintroduce a `commands/`
-  file if it does (a bare `.claude/commands/*.md` is not namespaced).
+  Installed at `~/.claude/skills/queue/`, the **directory name** is what
+  registers `/queue`.
 - `assets/` — GitHub Pages landing pages (EN/ZH); not part of the mechanism.
+
+## Ships as a standalone skill, NOT a plugin
+
+Install is `git clone … ~/.claude/skills/queue`. There is intentionally no
+`.claude-plugin/` manifest and no marketplace. Reason (verified against the
+docs + a live install, July 2026): **Claude Code always namespaces a plugin's
+commands as `/plugin-name:command`.** A marketplace install of this as a plugin
+named `queue` produced `/queue:queue`; a throwaway `commands/qtest.md` probe
+inside the plugin registered as `/queue:qtest` — confirming even plugin
+`commands/` files are namespaced. A bare `/queue` (the whole point) only comes
+from a standalone skill under `~/.claude/skills/`. Adding a `.claude-plugin/`
+back would turn a skills-dir clone into a namespaced `@skills-dir` plugin and
+break the bare command — so don't.
 
 ## History — why there is no code
 

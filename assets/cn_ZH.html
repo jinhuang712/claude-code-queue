@@ -102,9 +102,9 @@
       <p class="lead">Claude Code 的消息队列。忙时输入 <code>/queue …</code>，消息会先等候——<strong>本轮跑完后</strong>才执行，而不是在下一个 tool-call 边界被插进去。</p>
       <div class="quick">
         <h3>安装</h3>
-<pre><span class="prompt">$</span> /plugin marketplace add jinhuang712/claude-code-queue
-<span class="prompt">$</span> /plugin install queue@jinhuang712
-<span class="prompt">$</span> /reload-plugins</pre>
+<pre><span class="prompt">$</span> git clone https://github.com/jinhuang712/claude-code-queue \
+    ~/.claude/skills/queue
+<span class="dim"># 重启 Claude Code — 就有了裸 /queue</span></pre>
       </div>
     </div>
     <div class="term" aria-label="terminal demo">

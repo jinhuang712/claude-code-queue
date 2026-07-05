@@ -103,9 +103,9 @@
       <p class="lead">A prompt queue for Claude Code. Type <code>/queue …</code> while Claude is busy and the message waits — it runs <strong>after</strong> the current turn, instead of being injected at the next tool-call boundary.</p>
       <div class="quick">
         <h3>Install</h3>
-<pre><span class="prompt">$</span> /plugin marketplace add jinhuang712/claude-code-queue
-<span class="prompt">$</span> /plugin install queue@jinhuang712
-<span class="prompt">$</span> /reload-plugins</pre>
+<pre><span class="prompt">$</span> git clone https://github.com/jinhuang712/claude-code-queue \
+    ~/.claude/skills/queue
+<span class="dim"># restart Claude Code — you now have a bare /queue</span></pre>
       </div>
     </div>
     <div class="term" aria-label="terminal demo">
