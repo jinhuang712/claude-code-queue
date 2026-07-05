@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>claude-code-queue — Claude Code 的排队工具</title>
-<meta name="description" content="Claude Code 的消息队列。/queue 把消息延后到当前轮结束后执行，而不是在下一个 tool-call 边界插进去。">
+<meta name="description" content="Claude Code 的 /queue：把请求延后到当前轮结束后执行。一条 slash command——排队由原生调度器完成。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -111,9 +111,9 @@
       <div class="bar"><i></i><i></i><i></i></div>
       <div class="body">
         <div><span class="prompt">/queue</span> then run the tests and fix failures</div>
-        <div class="amber">📝 Queued (runs after the current turn, 1 pending): then run the tests…</div>
         <div class="out">… Claude 继续干活，不受打扰 …</div>
-        <div class="amber">🔔 queued message popped (queue empty): then run the tests and fix failures</div>
+        <div class="out">… 本轮结束 …</div>
+        <div class="amber">/queue then run the tests and fix failures</div>
         <div class="green">✓ auto-started</div>
         <div><span class="cursor"></span></div>
       </div>
@@ -125,7 +125,7 @@
   <div class="wrap">
     <p class="eyebrow">为什么</p>
     <h2>按回车，不该把当前任务带偏。</h2>
-    <p class="kicker">默认情况下，Claude Code 忙时你发的消息会在下一个 tool-call 边界被插进去——它会打断、带偏正在跑的任务。claude-code-queue 补上了缺失的 <em>queue</em>：消息先等候，等本轮结束、在<strong>同一会话</strong>里再执行。</p>
+    <p class="kicker">Claude Code 忙时你发的<strong>普通消息</strong>会在下一个 tool-call 边界被插进去——它会打断、带偏正在跑的任务。但对<em>已注册的 slash command</em>，Claude Code 原生就会等到整轮结束才投递。claude-code-queue 做的只是把 <code>/queue</code> 注册成一条命令：排队由原生调度器完成，命令正文则让 Claude 在你离开时也能把延后的请求稳妥跑完。</p>
   </div>
 </section>
 
@@ -163,7 +163,7 @@
       <h4>忙时排队一个后续任务</h4>
       <p class="cap">Claude 正忙。把下一个任务排进去，不打断：</p>
 <pre><span class="prompt">/queue</span> then run the test suite and fix anything that breaks
-<span class="amber">📝 Queued (runs after the current turn, 1 pending): then run the test…</span></pre>
+<span class="dim"># 原生暂存；本轮结束后自动执行</span></pre>
     </div>
 
     <div class="example">
@@ -179,13 +179,7 @@
 actually fix this blocking bug first   <span class="amber"># 这个先跑</span></pre>
     </div>
 
-    <div class="example">
-      <h4>查看 / 清空</h4>
-<pre><span class="prompt">/queue</span>          <span class="amber"># 查看本会话队列</span>
-<span class="prompt">/queue</span> clear    <span class="amber"># 清空</span></pre>
-    </div>
-
-    <p class="kicker" style="margin-top:34px;font-size:14px">作为原生 plugin 分发——不用改 <code>settings.json</code>，不用 npx。完整机制、设计说明和测试见 <a href="https://github.com/jinhuang712/claude-code-queue" style="border-bottom:1px solid var(--rule)">仓库</a>。</p>
+    <p class="kicker" style="margin-top:34px;font-size:14px">没有 hook、没有守护进程、没有存储——只有一个命令定义。按 ↑ 可编辑排队中的消息（原生功能）。原理详见 <a href="https://github.com/jinhuang712/claude-code-queue" style="border-bottom:1px solid var(--rule)">仓库</a>。</p>
   </div>
 </section>
 

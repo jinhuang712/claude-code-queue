@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "claude-code-queue",
   "displayName": "claude-code-queue",
-  "description": "A prompt queue. /queue defers a message until after the current turn instead of injecting it at the next tool-call boundary.",
+  "description": "/queue defers a request until the current turn ends. A single slash command — Claude Code's native scheduler does the queueing.",
   "author": { "name": "Huang Jin", "url": "https://github.com/jinhuang712" },
   "repository": "https://github.com/jinhuang712/claude-code-queue",
   "homepage": "https://github.com/jinhuang712/claude-code-queue",

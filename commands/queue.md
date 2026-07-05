@@ -1,7 +1,17 @@
 ---
-description: Queue a prompt — runs after the current turn if Claude is busy, or immediately if idle (same session)
+description: Defer a request to run after the current turn instead of interrupting it (same session)
+argument-hint: [request to run after the current turn]
 ---
 
-The user typed `/queue` with the request below. The UserPromptSubmit hook determined Claude is **idle** right now (no turn running), so there is nothing to wait behind. Handle the request immediately, as if the user had typed it directly. Do not mention the queue or that this was queued — just respond to the request:
+The request below was deferred with /queue, so it runs after the previous turn
+finished — by which point the user has likely stepped away and isn't watching
+live. So:
+
+- Treat it as a normal, fresh request. Don't mention that it was queued or
+  deferred — just do it.
+- Don't stop to ask clarifying questions. Make a reasonable choice, note the
+  assumption you made, and carry on to completion.
+- End with a one-line summary: what you did, and anything that needs the
+  user's attention when they're back.
 
 $ARGUMENTS

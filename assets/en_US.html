@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>claude-code-queue — a queue for Claude Code</title>
-<meta name="description" content="A prompt queue for Claude Code. /queue defers a message until after the current turn instead of injecting it at the next tool-call boundary.">
+<meta name="description" content="/queue for Claude Code: defer a request until the current turn ends. A single slash command — the native scheduler does the queueing.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -112,9 +112,9 @@
       <div class="bar"><i></i><i></i><i></i></div>
       <div class="body">
         <div><span class="prompt">/queue</span> then run the tests and fix failures</div>
-        <div class="amber">📝 Queued (runs after the current turn, 1 pending): then run the tests…</div>
         <div class="out">… Claude keeps working, uninterrupted …</div>
-        <div class="amber">🔔 queued message popped (queue empty): then run the tests and fix failures</div>
+        <div class="out">… turn ends …</div>
+        <div class="amber">/queue then run the tests and fix failures</div>
         <div class="green">✓ auto-started</div>
         <div><span class="cursor"></span></div>
       </div>
@@ -126,7 +126,7 @@
   <div class="wrap">
     <p class="eyebrow">Why</p>
     <h2>Pressing Enter mid-turn shouldn't derail the turn.</h2>
-    <p class="kicker">By default, a message sent while Claude Code is mid-turn is injected at the next tool-call boundary — it interrupts and redirects the running task. claude-code-queue adds the missing <em>queue</em>: the message waits, then runs when the turn ends, in the same session.</p>
+    <p class="kicker">A plain message sent while Claude Code is mid-turn is injected at the next tool-call boundary — it interrupts and redirects the running task. But Claude Code holds a <em>recognized slash command</em> until the whole turn ends. claude-code-queue simply registers <code>/queue</code> as one: the native scheduler does the queueing, and the command body tells Claude to run the deferred request unattended.</p>
   </div>
 </section>
 
@@ -164,7 +164,7 @@
       <h4>Queue a follow-up while busy</h4>
       <p class="cap">Claude is mid-turn. Line up the next task without cutting in:</p>
 <pre><span class="prompt">/queue</span> then run the test suite and fix anything that breaks
-<span class="amber">📝 Queued (runs after the current turn, 1 pending): then run the test…</span></pre>
+<span class="dim"># held natively; runs after the current turn ends</span></pre>
     </div>
 
     <div class="example">
@@ -180,13 +180,7 @@
 actually fix this blocking bug first   <span class="amber"># runs first</span></pre>
     </div>
 
-    <div class="example">
-      <h4>Inspect / clear</h4>
-<pre><span class="prompt">/queue</span>          <span class="amber"># show this session's queue</span>
-<span class="prompt">/queue</span> clear    <span class="amber"># empty it</span></pre>
-    </div>
-
-    <p class="kicker" style="margin-top:34px;font-size:14px">Distributed as a native plugin — no <code>settings.json</code> editing, no npx. See the <a href="https://github.com/jinhuang712/claude-code-queue" style="border-bottom:1px solid var(--rule)">repo</a> for the full mechanism, design notes, and tests.</p>
+    <p class="kicker" style="margin-top:34px;font-size:14px">No hooks, no daemon, no storage — just a command definition. Press ↑ to edit what's queued (native). See the <a href="https://github.com/jinhuang712/claude-code-queue" style="border-bottom:1px solid var(--rule)">repo</a> for how it works.</p>
   </div>
 </section>
 
