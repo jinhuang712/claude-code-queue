@@ -41,9 +41,8 @@
   pre{background:var(--term-bg);color:var(--term-ink);padding:16px 18px;border-radius:10px;overflow-x:auto;font-size:13px;line-height:1.75;margin:0}
   .prompt{color:var(--term-green)}
   pre .amber{color:var(--term-amber)}
-  pre .dim{color:var(--term-dim)}
 
-  .code-box{position:relative;max-width:680px}
+  .code-box{position:relative;max-width:680px;margin:0 auto}
   .copy-btn{position:absolute;top:10px;right:10px;display:flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0;border-radius:7px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:var(--term-dim);cursor:pointer;transition:background .15s,color .15s,border-color .15s}
   .copy-btn:hover{background:rgba(255,255,255,.13);color:var(--term-ink);border-color:rgba(255,255,255,.24)}
   .copy-btn:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
@@ -51,6 +50,7 @@
   .copy-btn .i-check{display:none;color:var(--term-green)}
   .copy-btn.copied .i-copy{display:none}
   .copy-btn.copied .i-check{display:block}
+  .install-hint{max-width:680px;margin:14px auto 0;color:var(--ink-2);font-family:'IBM Plex Mono',monospace;font-size:13px;text-align:center}
 
   section{padding:68px 0;border-bottom:1px solid var(--rule)}
   .eyebrow{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:15px;text-transform:uppercase;letter-spacing:.09em;color:var(--amber);margin:0 0 14px}
@@ -151,9 +151,9 @@
         <svg class="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
         <svg class="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
       </button>
-<pre><span class="prompt">$</span> curl -fsSL https://jinhuang712.github.io/claude-code-queue/install.sh | bash
-<span class="dim"># 重启 Claude Code — 就有了裸 /queue</span></pre>
+<pre><span class="prompt">$</span> curl -fsSL https://jinhuang712.github.io/claude-code-queue/install.sh | bash</pre>
     </div>
+    <p class="install-hint"># 重启 Claude Code — 就有了裸 /queue</p>
   </div>
 </section>
 
