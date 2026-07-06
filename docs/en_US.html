@@ -87,6 +87,7 @@
   .cc-compare{display:grid;gap:20px;grid-template-columns:1fr}
   @media(min-width:760px){.cc-compare{grid-template-columns:1fr 1fr}}
   .cc-mini{max-width:420px}
+  .cc.cc-mini[data-anim] .cc-scr{min-height:120px}
   .cc-cap{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-2);margin:0 0 9px;display:flex;align-items:center;gap:8px}
   .cc-cap-dot{width:8px;height:8px;border-radius:50%;background:#93b7e0;flex:none}
   .cc-cap-dot.warn{background:#e6a15c}
@@ -171,12 +172,12 @@
     </div>
 
     <div class="cc-cap" style="margin-top:26px"><span class="cc-cap-dot"></span> Nothing running? It just goes.</div>
-    <div class="cc cc-mini">
+    <div class="cc cc-mini" data-anim id="idle-demo" role="img" aria-label="Animated demo: with nothing running, /queue starts right away, exactly like a normal prompt."
+         data-task="refactor the auth module"
+         data-file="src/auth/session.ts"
+         data-ok="auth module refactored">
       <div class="cc-bar"><i></i><i></i><i></i><span class="cc-title">claude-code</span></div>
-      <div class="cc-scr">
-        <div class="cc-line cc-prompt"><span class="cc-chev">❯</span> <span class="cc-q">/queue</span> refactor the auth module</div>
-        <div class="cc-line"><span class="cc-spin">✳</span> <span class="cc-amber">Working…</span> <span class="cc-dim">(0s · esc to interrupt)</span></div>
-      </div>
+      <div class="cc-scr"></div>
     </div>
 
     <p class="kicker" style="margin-top:34px;font-size:14px">No hooks, no daemon, no storage — just a command definition. Press ↑ to edit what's queued (native). See the <a href="https://github.com/jinhuang712/claude-code-queue" style="border-bottom:1px solid var(--rule)">repo</a> for how it works.</p>
@@ -296,6 +297,27 @@
         sf.after(9100, function(){ F.stopThink(); if (th) th.remove(); F.ok(fd.ok2); });
         sf.after(9500, function(){ F.line('cc-dim', fd.drain); });
         sf.after(12500, loop);
+      })();
+    }
+  }
+
+  var idleEl = document.getElementById('idle-demo');
+  if (idleEl) {
+    var I = new Panel(idleEl);
+    var di = idleEl.dataset;
+    if (reduce) {
+      I.line('cc-prompt', '<span class="cc-chev">❯</span> <span class="cc-q">/queue</span> ' + di.task);
+      I.ok(di.ok);
+    } else {
+      var si = scheduler();
+      (function loop(){
+        si.clear(); I.clear();
+        var th;
+        si.after(600, function(){ I.line('cc-prompt', '<span class="cc-chev">❯</span> <span class="cc-q">/queue</span> ' + di.task); });
+        si.after(900, function(){ th = I.think(); });
+        si.after(1900, function(){ I.tool('Edit', di.file); });
+        si.after(3100, function(){ I.stopThink(); if (th) th.remove(); I.ok(di.ok); });
+        si.after(6000, loop);
       })();
     }
   }
