@@ -43,6 +43,15 @@
   pre .amber{color:var(--term-amber)}
   pre .dim{color:var(--term-dim)}
 
+  .code-box{position:relative;max-width:680px}
+  .copy-btn{position:absolute;top:10px;right:10px;display:flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0;border-radius:7px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:var(--term-dim);cursor:pointer;transition:background .15s,color .15s,border-color .15s}
+  .copy-btn:hover{background:rgba(255,255,255,.13);color:var(--term-ink);border-color:rgba(255,255,255,.24)}
+  .copy-btn:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+  .copy-btn svg{width:15px;height:15px;display:block}
+  .copy-btn .i-check{display:none;color:var(--term-green)}
+  .copy-btn.copied .i-copy{display:none}
+  .copy-btn.copied .i-check{display:block}
+
   section{padding:68px 0;border-bottom:1px solid var(--rule)}
   .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--amber);margin:0 0 12px}
   section h2{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:clamp(22px,3.4vw,29px);letter-spacing:-.01em;margin:0 0 14px}
@@ -135,10 +144,16 @@
 <section class="install-section">
   <div class="wrap">
     <p class="eyebrow">安装</p>
-<pre><span class="prompt">$</span> curl -fsSL \
-  https://jinhuang712.github.io/claude-code-queue/install.sh \
-  | bash
+    <div class="code-box">
+      <button class="copy-btn" type="button" aria-label="复制安装命令"
+              data-copy="curl -fsSL https://jinhuang712.github.io/claude-code-queue/install.sh | bash"
+              data-label="复制安装命令" data-copied-label="已复制">
+        <svg class="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        <svg class="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      </button>
+<pre><span class="prompt">$</span> curl -fsSL https://jinhuang712.github.io/claude-code-queue/install.sh | bash
 <span class="dim"># 重启 Claude Code — 就有了裸 /queue</span></pre>
+    </div>
   </div>
 </section>
 
@@ -321,6 +336,40 @@
       })();
     }
   }
+})();
+</script>
+<script>
+(function(){
+  function fallbackCopy(text){
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  document.querySelectorAll('.copy-btn').forEach(function(btn){
+    var timer = null;
+    btn.addEventListener('click', function(){
+      var text = btn.getAttribute('data-copy') || '';
+      function done(){
+        btn.classList.add('copied');
+        btn.setAttribute('aria-label', btn.getAttribute('data-copied-label') || 'Copied');
+        clearTimeout(timer);
+        timer = setTimeout(function(){
+          btn.classList.remove('copied');
+          btn.setAttribute('aria-label', btn.getAttribute('data-label') || 'Copy');
+        }, 1600);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function(){ fallbackCopy(text); done(); });
+      } else {
+        fallbackCopy(text); done();
+      }
+    });
+  });
 })();
 </script>
 </body>
