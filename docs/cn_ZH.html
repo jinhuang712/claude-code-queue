@@ -95,7 +95,7 @@
   @keyframes ccblink{50%{opacity:0}}
   .cc-compare{display:grid;gap:20px;grid-template-columns:1fr}
   @media(min-width:760px){.cc-compare{grid-template-columns:1fr 1fr}}
-  .cc-mini{max-width:420px}
+  .cc-demo{max-width:640px;margin:0 auto}
   .cc.cc-mini[data-anim] .cc-scr{min-height:120px}
   .cc-cap{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-2);margin:0 0 10px;display:flex;align-items:center;gap:8px}
   .cc-cap-dot{width:8px;height:8px;border-radius:50%;background:#93b7e0;flex:none}
@@ -172,7 +172,7 @@
     <p class="kicker" style="margin-bottom:28px">忙时发的每一条 <code>/queue</code>，都会按顺序进入这次会话的先进先出队列——本轮一结束，排在最前面的那条就自动开始。</p>
 
     <div class="cc-cap"><span class="cc-cap-dot"></span> FIFO — 一轮一条</div>
-    <div class="cc" data-anim id="fifo-demo" role="img" aria-label="动画演示：两条排队的请求按顺序等待，本轮结束就弹出一条执行。"
+    <div class="cc cc-demo" data-anim id="fifo-demo" role="img" aria-label="动画演示：两条排队的请求按顺序等待，本轮结束就弹出一条执行。"
          data-task0="润色一下文档"
          data-file="README.md"
          data-q1="更新 README，加上新参数"
@@ -187,7 +187,7 @@
     </div>
 
     <div class="cc-cap" style="margin-top:26px"><span class="cc-cap-dot"></span> 没有在跑的任务？直接执行。</div>
-    <div class="cc cc-mini" data-anim id="idle-demo" role="img" aria-label="动画演示：没有在跑的任务时，/queue 会立刻开始，跟普通消息一样。"
+    <div class="cc cc-demo cc-mini" data-anim id="idle-demo" role="img" aria-label="动画演示：没有在跑的任务时，/queue 会立刻开始，跟普通消息一样。"
          data-task="重构 auth 模块"
          data-file="src/auth/session.ts"
          data-ok="auth 模块重构完成">

@@ -95,7 +95,7 @@
   @keyframes ccblink{50%{opacity:0}}
   .cc-compare{display:grid;gap:20px;grid-template-columns:1fr}
   @media(min-width:760px){.cc-compare{grid-template-columns:1fr 1fr}}
-  .cc-mini{max-width:420px}
+  .cc-demo{max-width:640px;margin:0 auto}
   .cc.cc-mini[data-anim] .cc-scr{min-height:120px}
   .cc-cap{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-2);margin:0 0 10px;display:flex;align-items:center;gap:8px}
   .cc-cap-dot{width:8px;height:8px;border-radius:50%;background:#93b7e0;flex:none}
@@ -172,7 +172,7 @@
     <p class="kicker" style="margin-bottom:28px">Every <code>/queue</code> sent while Claude is busy joins a first-in-first-out line for that session. Each one drains as its own turn, right after the one ahead of it finishes.</p>
 
     <div class="cc-cap"><span class="cc-cap-dot"></span> FIFO — one per turn</div>
-    <div class="cc" data-anim id="fifo-demo" role="img" aria-label="Animated demo: two queued requests wait in order and run one at a time as each turn finishes."
+    <div class="cc cc-demo" data-anim id="fifo-demo" role="img" aria-label="Animated demo: two queued requests wait in order and run one at a time as each turn finishes."
          data-task0="polish the docs"
          data-file="README.md"
          data-q1="update the README with the new flag"
@@ -187,7 +187,7 @@
     </div>
 
     <div class="cc-cap" style="margin-top:26px"><span class="cc-cap-dot"></span> Nothing running? It just goes.</div>
-    <div class="cc cc-mini" data-anim id="idle-demo" role="img" aria-label="Animated demo: with nothing running, /queue starts right away, exactly like a normal prompt."
+    <div class="cc cc-demo cc-mini" data-anim id="idle-demo" role="img" aria-label="Animated demo: with nothing running, /queue starts right away, exactly like a normal prompt."
          data-task="refactor the auth module"
          data-file="src/auth/session.ts"
          data-ok="auth module refactored">
