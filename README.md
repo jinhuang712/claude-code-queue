@@ -3,7 +3,7 @@
 > `/queue <request>` — defer a request until the current turn ends, instead of
 > having it injected mid-turn at the next tool-call boundary.
 
-📄 **Landing page** (with a live animated demo of the queue behavior): [English](https://jinhuang712.github.io/claude-code-queue/en_US.html) · [中文](https://jinhuang712.github.io/claude-code-queue/cn_ZH.html)
+📄 **Landing page** (with a live animated demo of the queue behavior): [English](https://project.huangjin.online/claude-code-queue/en_US.html) · [中文](https://project.huangjin.online/claude-code-queue/cn_ZH.html)
 
 ## How it works (it's simpler than you'd think)
 
@@ -26,7 +26,7 @@ clarifying questions; note assumptions; end with a one-line summary).
 ## Install
 
 ```bash
-curl -fsSL https://jinhuang712.github.io/claude-code-queue/install.sh | bash
+curl -fsSL https://project.huangjin.online/claude-code-queue/install.sh | bash
 ```
 
 That drops one file — `SKILL.md` — into `~/.claude/skills/queue/`. The folder
